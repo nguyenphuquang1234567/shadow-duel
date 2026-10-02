@@ -47,3 +47,17 @@ test('real simulation lands close-range strikes during extension at different fr
  });
  for(const c of cases)expect(c.hp,JSON.stringify(c)).toBe(c.action==='punch'?91:85);
 });
+test('bot saves its second jump until threatened and releases jump between presses',async({page})=>{
+ await page.goto('http://localhost:5173');const result=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');const {chooseBotAction}=await import('/src/bot.ts');const c=new Combat();c.reset();c.b.x=500;c.p.x=600;c.p.action='punch';c.p.duration=.34;c.p.timer=.25;
+  const ground=chooseBotAction(c.b,c.p,2,()=>0);
+  c.b.y=50;c.b.jumps=1;c.b.vy=-100;const second=chooseBotAction(c.b,c.p,2,()=>0);
+  c.b.y=150;const safe=chooseBotAction(c.b,c.p,2,()=>0);
+  c.b.y=50;c.b.jumps=2;const spent=chooseBotAction(c.b,c.p,2,()=>0);
+  c.b.jumps=1;c.b.jumpHeld=true;const held=chooseBotAction(c.b,c.p,2,()=>0);
+  c.b.jumpHeld=false;c.p.action='idle';const calm=chooseBotAction(c.b,c.p,2,()=>0);
+  c.b.y=0;c.b.jumps=0;c.p.x=750;c.p.y=80;const chase=chooseBotAction(c.b,c.p,2,()=>0);
+  c.bot={jump:true};c.think=100;c.step(.016,{});const pulse=c.bot.jump;c.step(.016,{});const released=c.b.jumpHeld;
+  return{ground:!!ground.jump,second:!!second.jump,safe:!!safe.jump,spent:!!spent.jump,held:!!held.jump,calm:!!calm.jump,chase:!!chase.jump,pulse,released};
+ });expect(result).toEqual({ground:true,second:true,safe:false,spent:false,held:false,calm:false,chase:true,pulse:false,released:false});
+});

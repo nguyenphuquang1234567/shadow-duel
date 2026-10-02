@@ -1,3 +1,4 @@
+import {chooseBotAction} from './bot';
 import {hitbox,hurtboxes,overlaps,weaponBox,lerpCapsule,sweptContact,ACTIVE_START,ACTIVE_END} from './geometry';
 export type Action='idle'|'punch'|'kick'|'block'|'dodge'|'hurt';
 export interface Fighter{x:number;y:number;vy:number;jumps:number;jumpHeld:boolean;hp:number;energy:number;face:number;action:Action;timer:number;duration:number;hit:boolean;cooldown:number;walk:number}
@@ -7,9 +8,9 @@ export class Combat{
  make(x:number,face:number):Fighter{return{x,y:0,vy:0,jumps:0,jumpHeld:false,hp:100,energy:100,face,action:'idle',timer:0,duration:0,hit:false,cooldown:0,walk:0}}
  reset(){this.p=this.make(350,1);this.b=this.make(850,-1);this.time=90;this.elapsed=0;this.winner='';this.active=true;this.paused=false;this.bot={};this.think=0;this.events=[];this.sounds=[]}
  attack(f:Fighter,a:Action){const cost=a==='kick'?23:a==='punch'?12:18;if(f.energy<cost||f.cooldown>0||f.action==='hurt'||f.timer>0)return;f.energy-=cost;if(a==='dodge')this.sounds.push('dodge');f.action=a;f.duration=a==='kick'?.55:a==='punch'?.34:.35;f.timer=f.duration;f.hit=false;f.cooldown=f.duration+.12}
- step(dt:number,input:Input){if(!this.active||this.paused)return;dt=Math.min(dt,.035);const previousP={...this.p},previousB={...this.b},previousTime=this.elapsed;this.time=Math.max(0,this.time-dt);this.elapsed+=dt;this.think-=dt;const d=this.p.x-this.b.x;
- if(this.think<=0){this.think=[.42,.25,.14][this.level];const near=Math.abs(d)<145;const danger=['punch','kick'].includes(this.p.action);this.bot={left:d<0&&!near,right:d>0&&!near,block:danger&&Math.random()<[.25,.55,.8][this.level],punch:near&&Math.random()<.6,kick:near&&Math.random()<.55,dodge:danger&&Math.random()<.15,jump:Math.random()<.045};}
- this.update(this.p,this.b,input,dt);this.update(this.b,this.p,this.bot,dt);if(Math.abs(this.p.x-this.b.x)<58&&Math.abs(this.p.y-this.b.y)<70){const middle=(this.p.x+this.b.x)/2;this.p.x=middle-29*this.p.face;this.b.x=middle+29*this.p.face;}
+ step(dt:number,input:Input){if(!this.active||this.paused)return;dt=Math.min(dt,.035);const previousP={...this.p},previousB={...this.b},previousTime=this.elapsed;this.time=Math.max(0,this.time-dt);this.elapsed+=dt;this.think-=dt;
+ if(this.think<=0){this.think=[.42,.25,.14][this.level];this.bot=chooseBotAction(this.b,this.p,this.level);}
+ this.update(this.p,this.b,input,dt);this.update(this.b,this.p,this.bot,dt);this.bot.jump=false;if(Math.abs(this.p.x-this.b.x)<58&&Math.abs(this.p.y-this.b.y)<70){const middle=(this.p.x+this.b.x)/2;this.p.x=middle-29*this.p.face;this.b.x=middle+29*this.p.face;}
  const currentP={...this.p},currentB={...this.b};
  this.resolve(this.p,this.b,previousP,previousB,previousTime,currentP,currentB);this.resolve(this.b,this.p,previousB,previousP,previousTime,currentB,currentP);
  if(this.p.hp<=0||this.b.hp<=0||this.time===0){this.active=false;this.winner=this.p.hp===this.b.hp?'draw':this.p.hp>this.b.hp?'player':'bot';}}
