@@ -38,3 +38,37 @@ export function overlaps(a:Capsule,b:Capsule){
  if(c1*c2<0&&c3*c4<0)return true;
  return Math.min(distance(a.a,b.a,b.b),distance(a.b,b.a,b.b),distance(b.a,a.a,a.b),distance(b.b,a.a,a.b))<=a.r+b.r;
 }
+
+function capsuleDistance(a:Capsule,b:Capsule){
+ const c1=cross(a.a,a.b,b.a),c2=cross(a.a,a.b,b.b),c3=cross(b.a,b.b,a.a),c4=cross(b.a,b.b,a.b);
+ if(c1*c2<0&&c3*c4<0)return 0;
+ return Math.min(distance(a.a,b.a,b.b),distance(a.b,b.a,b.b),distance(b.a,a.a,a.b),distance(b.b,a.a,a.b));
+}
+export function lerpCapsule(a:Capsule,b:Capsule,t:number):Capsule{
+ const point=(p:Point,q:Point)=>({x:p.x+(q.x-p.x)*t,y:p.y+(q.y-p.y)*t});
+ return {a:point(a.a,b.a),b:point(a.b,b.b),r:a.r+(b.r-a.r)*t,part:a.part};
+}
+/** Sweep both capsules along their frame-to-frame paths, at the same time.
+ * Conservative advancement uses a bound on relative endpoint speed so it cannot
+ * jump over a collision. Returns the first contact fraction (within .001px).
+ */
+export function sweptContact(a0:Capsule,a1:Capsule,b0:Capsule,b1:Capsule):number|null{
+ const travel=(p:Point,q:Point)=>Math.hypot(q.x-p.x,q.y-p.y);
+ const speed=Math.max(travel(a0.a,a1.a),travel(a0.b,a1.b))+Math.max(travel(b0.a,b1.a),travel(b0.b,b1.b))+Math.abs(a1.r-a0.r)+Math.abs(b1.r-b0.r);
+ let t=0;
+ for(let i=0;i<512;i++){
+  const a=lerpCapsule(a0,a1,t),b=lerpCapsule(b0,b1,t);
+  const gap=capsuleDistance(a,b)-a.r-b.r;
+  if(gap<=.001)return t;
+  if(speed===0)return null;
+  const next=t+gap/speed;
+  if(next>1)return overlaps(a1,b1)?1:null;
+  t=next;
+ }
+ return null;
+}
+/** Un-gated weapon geometry used when clipping a sweep to the active window. */
+export function weaponBox(f:Fighter,t:number):Capsule{
+ const p=pose(f,t);
+ return f.action==='punch'?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:{x:p.foot.x+f.face*13,y:p.foot.y-2},r:5,part:'foot'};
+}

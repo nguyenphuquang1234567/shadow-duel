@@ -19,6 +19,6 @@ A/D or arrow keys: move; W: jump; J: punch; K: kick; L: block; Space: dodge; Esc
 
 Assets live in `public/audio/`; keys and playback are in `src/audio.ts`. The current dodge sound is a supplied WAV. `scripts/generate_sfx.py` generates procedural effects; running it without arguments also overwrites the dodge file. Pass `punch`, `kick`, or `block` to regenerate only those effects.
 
-The `main` baseline uses distance checks. On `feature/hitbox-hurtbox`, animated fist/foot hitboxes collide with head, torso and limb hurtboxes. Dodge lowers the body and moves backward without automatic invulnerability. Press H to toggle collision visualization. Each attack deals damage at most once during its active window.
+The `main` baseline uses distance checks. On `feature/hitbox-hurtbox`, animated fist/foot hitboxes collide with head, torso and limb hurtboxes. Dodge lowers the body and moves backward without automatic invulnerability. Press H to toggle collision visualization. Each attack deals damage at most once during its active window. Frame-to-frame capsule sweeps check weapon and opponent motion together, clipped to the active portion of the attack, so a weapon passing through a target between frames still registers contact.
 
 Run `npx playwright test` for collision regressions and browser smoke testing; tests use installed Google Chrome.

@@ -19,3 +19,19 @@ test('body collision, active window, one hit, mirrored attacks, and wall dodge',
 test('game starts and shows debug hurtboxes without runtime errors',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://localhost:5173');await page.click('#start');await page.keyboard.press('h');await page.keyboard.down('d');await page.waitForTimeout(700);await page.keyboard.up('d');await page.keyboard.down('k');await page.waitForTimeout(500);await page.keyboard.up('k');await page.screenshot({path:'preview-hitboxes.png'});expect(errors).toEqual([]);
 });
+test('sweeps catch crossed targets without inventing contact or damage outside active frames',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const result=await page.evaluate(async()=>{
+  const {sweptContact,overlaps}=await import('/src/geometry.ts');
+  const {Combat}=await import('/src/combat.ts');
+  const circle=(x,y=0,r=1)=>({a:{x,y},b:{x,y},r,part:'test'});
+  const a=circle(100),z=circle(120),target=circle(110);
+  const cross=sweptContact(a,z,target,target);
+  const miss=sweptContact(circle(100,10),circle(120,10),target,target);
+  const moving=sweptContact(circle(0),circle(20),circle(20),circle(0));
+  const parallel=sweptContact(circle(0),circle(20),circle(10),circle(30));
+  function simulate(phase){const c=new Combat();c.reset();c.p.x=100;c.p.action='punch';c.p.duration=.34;c.p.timer=.34*phase;c.b.x=300;const oldP={...c.p},oldB={...c.b};c.p.x=400;c.elapsed=.01;c.p.timer-=.01;c.resolve(c.p,c.b,oldP,oldB,0);const hp=c.b.hp;c.resolve(c.p,c.b,oldP,oldB,0);return {hp,twice:c.b.hp}}
+  return {endpoints:overlaps(a,target)||overlaps(z,target),cross,miss,moving,parallel,active:simulate(.4),startup:simulate(.9),recovery:simulate(.1)};
+ });
+ expect(result.endpoints).toBe(false);expect(result.cross).toBeCloseTo(.4,3);expect(result.miss).toBeNull();expect(result.moving).not.toBeNull();expect(result.parallel).toBeNull();expect(result.active.hp).toBe(91);expect(result.active.twice).toBe(91);expect(result.startup.hp).toBe(100);expect(result.recovery.hp).toBe(100);
+});
