@@ -11,7 +11,7 @@ export class CombatAudio {
   constructor() {
     this.music.id = 'background-music';
     this.music.loop = true;
-    this.music.volume = .12;
+    this.music.volume = .20;
     this.music.preload = 'metadata';
     this.music.hidden = true;
     document.body.append(this.music);
