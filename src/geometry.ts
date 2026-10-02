@@ -53,7 +53,7 @@ export function pose(f:Fighter,t:number){
   const lift=Math.max(0,bottom-(443-f.y));
   const left=Math.min(...all.map(p=>p.x))-15,right=Math.max(...all.map(p=>p.x))+15;
   const shift=left<60?60-left:right>1140?1140-right:0;
-  for(const point of all){point.x+=shift;point.y-=lift}
+  for(const point of all){point.x+=shift;point.y+=20*ease-lift}
  }
  return {x,y,phase,strike,punch,kick,block,dodge,hurt,...points};
 }
