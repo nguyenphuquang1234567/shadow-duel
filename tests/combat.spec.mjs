@@ -6,7 +6,7 @@ test('body collision, active window, one hit, mirrored attacks, and wall dodge',
   function setup(action,distance,face=1,dodge=false){const c=new Combat();c.reset();c.p.x=face===1?95:1105;c.p.face=face;c.b.x=c.p.x+face*distance;c.b.face=-face;if(dodge){c.p.action='dodge';c.p.timer=.2;c.p.duration=.35;c.b.action=action;c.b.duration=action==='kick'?.55:.34;c.b.timer=c.b.duration*.4}else{c.p.action=action;c.p.duration=action==='kick'?.55:.34;c.p.timer=c.p.duration*.4}return c}
   const near=setup('punch',90);near.resolve(near.p,near.b);const hp=near.b.hp;near.resolve(near.p,near.b);
   const far=setup('punch',180);far.resolve(far.p,far.b);
-  const early=setup('punch',90);early.p.timer=early.p.duration*.8;early.resolve(early.p,early.b);
+  const early=setup('punch',90);early.p.timer=early.p.duration*.98;early.resolve(early.p,early.b);
   const mirror=setup('punch',90,-1);mirror.resolve(mirror.p,mirror.b);
   const wall=setup('kick',100,1,true);wall.update(wall.p,wall.b,{},.02);const wallX=wall.p.x;wall.resolve(wall.b,wall.p);
   const escape=setup('kick',65,1,true);escape.p.x=200;escape.b.x=265;escape.update(escape.p,escape.b,{},.3);escape.resolve(escape.b,escape.p);
@@ -31,7 +31,19 @@ test('sweeps catch crossed targets without inventing contact or damage outside a
   const moving=sweptContact(circle(0),circle(20),circle(20),circle(0));
   const parallel=sweptContact(circle(0),circle(20),circle(10),circle(30));
   function simulate(phase){const c=new Combat();c.reset();c.p.x=100;c.p.action='punch';c.p.duration=.34;c.p.timer=.34*phase;c.b.x=300;const oldP={...c.p},oldB={...c.b};c.p.x=400;c.elapsed=.01;c.p.timer-=.01;c.resolve(c.p,c.b,oldP,oldB,0);const hp=c.b.hp;c.resolve(c.p,c.b,oldP,oldB,0);return {hp,twice:c.b.hp}}
-  return {endpoints:overlaps(a,target)||overlaps(z,target),cross,miss,moving,parallel,active:simulate(.4),startup:simulate(.9),recovery:simulate(.1)};
+  return {endpoints:overlaps(a,target)||overlaps(z,target),cross,miss,moving,parallel,active:simulate(.4),startup:simulate(.98),recovery:simulate(.1)};
  });
  expect(result.endpoints).toBe(false);expect(result.cross).toBeCloseTo(.4,3);expect(result.miss).toBeNull();expect(result.moving).not.toBeNull();expect(result.parallel).toBeNull();expect(result.active.hp).toBe(91);expect(result.active.twice).toBe(91);expect(result.startup.hp).toBe(100);expect(result.recovery.hp).toBe(100);
+});
+test('real simulation lands close-range strikes during extension at different frame rates',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const cases=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');const results=[];
+  for(const action of ['punch','kick'])for(const face of [-1,1])for(const distance of [58,65,75,90,110])for(const fps of [30,60,144]){
+   const c=new Combat();c.reset();c.p.x=500;c.b.x=500+face*distance;c.p.face=face;c.b.face=-face;c.think=100;c.bot={};c.attack(c.p,action);
+   for(let i=0;i<Math.ceil(.7*fps);i++)c.step(1/fps,{});
+   results.push({action,face,distance,fps,hp:c.b.hp});
+  }return results;
+ });
+ for(const c of cases)expect(c.hp,JSON.stringify(c)).toBe(c.action==='punch'?91:85);
 });

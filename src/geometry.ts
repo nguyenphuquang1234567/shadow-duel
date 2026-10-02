@@ -1,4 +1,6 @@
 import type { Fighter } from './combat';
+export const ACTIVE_START = .9;
+export const ACTIVE_END = .18;
 export interface Point {x:number;y:number}
 export interface Capsule {a:Point;b:Point;r:number;part:string}
 export function pose(f:Fighter,t:number){
@@ -28,7 +30,7 @@ export function hurtboxes(f:Fighter,t:number):Capsule[]{const p=pose(f,t);return
 export function hitbox(f:Fighter,t:number):Capsule|null {
  if(!['punch','kick'].includes(f.action)||f.hit)return null;
  const p=pose(f,t); // Only the extended part of the animation can deal damage.
- if(p.phase>.55||p.phase<.18)return null;
+ if(p.phase>ACTIVE_START||p.phase<ACTIVE_END)return null;
  return p.punch?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:{x:p.foot.x+f.face*13,y:p.foot.y-2},r:5,part:'foot'};
 }
 function distance(p:Point,a:Point,b:Point){const dx=b.x-a.x,dy=b.y-a.y;const length=dx*dx+dy*dy;const t=length?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/length)):0;return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)}

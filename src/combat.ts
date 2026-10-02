@@ -1,4 +1,4 @@
-import {hitbox,hurtboxes,overlaps,weaponBox,lerpCapsule,sweptContact} from './geometry';
+import {hitbox,hurtboxes,overlaps,weaponBox,lerpCapsule,sweptContact,ACTIVE_START,ACTIVE_END} from './geometry';
 export type Action='idle'|'punch'|'kick'|'block'|'dodge'|'hurt';
 export interface Fighter{x:number;y:number;vy:number;hp:number;energy:number;face:number;action:Action;timer:number;duration:number;hit:boolean;cooldown:number;walk:number}
 export interface Input{left?:boolean;right?:boolean;jump?:boolean;punch?:boolean;kick?:boolean;block?:boolean;dodge?:boolean}
@@ -25,10 +25,10 @@ export class Combat{
   const fromPhase=previousF.timer/previousF.duration;
   const toPhase=(previousF.timer-elapsed)/previousF.duration;
   const span=fromPhase-toPhase;
-  const start=span>0?Math.max(0,(fromPhase-.55)/span):0;
-  const end=span>0?Math.min(1,(fromPhase-.18)/span):1;
+  const start=span>0?Math.max(0,(fromPhase-ACTIVE_START)/span):0;
+  const end=span>0?Math.min(1,(fromPhase-ACTIVE_END)/span):1;
   box=null;
-  if(start<=end&&start<=1&&end>=0&&fromPhase>=.18&&toPhase<=.55){
+  if(start<=end&&start<=1&&end>=0&&fromPhase>=ACTIVE_END&&toPhase<=ACTIVE_START){
    const endF={...currentF,action:previousF.action,duration:previousF.duration,timer:Math.max(0,previousF.timer-elapsed)};
    const a0=weaponBox(previousF,previousTime),a1=weaponBox(endF,this.elapsed);
    const b0=hurtboxes(previousO,previousTime),b1=hurtboxes(currentO,this.elapsed);
