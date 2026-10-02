@@ -25,7 +25,6 @@ export function hurtboxes(f:Fighter,t:number):Capsule[]{const p=pose(f,t);return
  {a:p.hip,b:p.backKnee,r:7.5,part:'back-thigh'},{a:p.backKnee,b:p.backFoot,r:6,part:'back-shin'},
  {a:p.hip,b:p.knee,r:8,part:'front-thigh'},{a:p.knee,b:p.foot,r:6,part:'front-shin'},
  {a:p.shoulder,b:p.elbow,r:6.5,part:'back-arm'},{a:p.elbow,b:p.fist,r:5.5,part:'back-forearm'},
- {a:p.shoulder,b:p.e2,r:7,part:'front-arm'},{a:p.e2,b:p.h2,r:5.5,part:'front-forearm'},
 ]}
 export function hitbox(f:Fighter,t:number):Capsule|null {
  if(!['punch','kick'].includes(f.action)||f.hit)return null;
