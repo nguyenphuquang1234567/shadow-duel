@@ -73,3 +73,13 @@ test('active strikes cover limb middles as well as extremities, including somers
  });
  for(const c of cases){if('afterHit'in c)expect(c.afterHit).toBe(0);else{expect(c.parts).toHaveLength(3);for(const m of c.middle){expect(m.limb).toBe(true);expect(m.tip).toBe(false)}}}
 });
+test('KO falls down and waits one second before announcing results; reset clears it',async({page})=>{
+ await page.goto('http://localhost:5173');const r=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');const {pose}=await import('/src/geometry.ts');
+  const c=new Combat();c.reset();c.b.hp=0;c.step(.01,{});const initial={active:c.active,action:c.b.action,winner:c.winner};
+  for(let i=0;i<50;i++)c.step(.01,{punch:true});const halfway={winner:c.winner,hp:c.p.hp};const p=pose(c.b,c.elapsed);const horizontal=Math.abs(p.head.y-p.hip.y)<30;
+  for(let i=0;i<51;i++)c.step(.01,{});const end=c.winner;c.reset();const reset={pending:c.pendingWinner,age:c.b.downAge,action:c.b.action};
+  const draw=new Combat();draw.reset();draw.p.hp=0;draw.b.hp=0;draw.step(.01,{});const both=[draw.p.action,draw.b.action];
+  return{initial,halfway,horizontal,end,reset,both};
+ });expect(r).toEqual({initial:{active:false,action:'down',winner:''},halfway:{winner:'',hp:100},horizontal:true,end:'player',reset:{pending:'',age:0,action:'idle'},both:['down','down']});
+});

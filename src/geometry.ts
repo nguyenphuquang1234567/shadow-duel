@@ -40,6 +40,21 @@ export function pose(f:Fighter,t:number){
    point.x=cx+dx*cos-dy*sin;point.y=cy+dx*sin+dy*cos;
   }
  }
+ if(f.action==='down'){
+  const progress=Math.min(1,f.downAge/.4),ease=1-(1-progress)**3;
+  const angle=-f.face*Math.PI/2*ease,cos=Math.cos(angle),sin=Math.sin(angle);
+  const cx=hip.x,cy=hip.y;
+  for(const point of Object.values(points)){
+   const dx=point.x-cx,dy=point.y-cy;
+   point.x=cx+dx*cos-dy*sin;point.y=cy+dx*sin+dy*cos+40*ease;
+  }
+  // Keep the fallen silhouette on the floor and inside the arena.
+  const all=Object.values(points),bottom=Math.max(...all.map(p=>p.y))+15;
+  const lift=Math.max(0,bottom-(443-f.y));
+  const left=Math.min(...all.map(p=>p.x))-15,right=Math.max(...all.map(p=>p.x))+15;
+  const shift=left<60?60-left:right>1140?1140-right:0;
+  for(const point of all){point.x+=shift;point.y-=lift}
+ }
  return {x,y,phase,strike,punch,kick,block,dodge,hurt,...points};
 }
 export function hurtboxes(f:Fighter,t:number):Capsule[]{const p=pose(f,t);return[
