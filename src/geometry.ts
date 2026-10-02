@@ -48,11 +48,11 @@ export function hurtboxes(f:Fighter,t:number):Capsule[]{const p=pose(f,t);return
  {a:p.hip,b:p.knee,r:8,part:'front-thigh'},{a:p.knee,b:p.foot,r:6,part:'front-shin'},
  {a:p.shoulder,b:p.elbow,r:6.5,part:'back-arm'},{a:p.elbow,b:p.fist,r:5.5,part:'back-forearm'},
 ]}
-export function hitbox(f:Fighter,t:number):Capsule|null {
- if(!['punch','kick'].includes(f.action)||f.hit)return null;
+export function hitboxes(f:Fighter,t:number):Capsule[] {
+ if(!['punch','kick'].includes(f.action)||f.hit)return [];
  const p=pose(f,t); // Only the extended part of the animation can deal damage.
- if(p.phase>ACTIVE_START||p.phase<ACTIVE_END)return null;
- return p.punch?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:p.toe,r:5,part:'foot'};
+ if(p.phase>ACTIVE_START||p.phase<ACTIVE_END)return [];
+ return weaponBoxes(f,t);
 }
 function distance(p:Point,a:Point,b:Point){const dx=b.x-a.x,dy=b.y-a.y;const length=dx*dx+dy*dy;const t=length?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/length)):0;return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)}
 function cross(a:Point,b:Point,c:Point){return(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)}
@@ -91,7 +91,15 @@ export function sweptContact(a0:Capsule,a1:Capsule,b0:Capsule,b1:Capsule):number
  return null;
 }
 /** Un-gated weapon geometry used when clipping a sweep to the active window. */
-export function weaponBox(f:Fighter,t:number):Capsule{
+export function weaponBoxes(f:Fighter,t:number):Capsule[]{
  const p=pose(f,t);
- return f.action==='punch'?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:p.toe,r:5,part:'foot'};
+ return f.action==='punch'?[
+  {a:p.shoulder,b:p.e2,r:7,part:'upper-arm'},
+  {a:p.e2,b:p.h2,r:5.5,part:'forearm'},
+  {a:p.h2,b:p.h2,r:8,part:'fist'},
+ ]:[
+  {a:p.hip,b:p.knee,r:8,part:'thigh'},
+  {a:p.knee,b:p.foot,r:6,part:'shin'},
+  {a:p.foot,b:p.toe,r:5,part:'foot'},
+ ];
 }

@@ -1,5 +1,5 @@
 import {chooseBotAction} from './bot';
-import {hitbox,hurtboxes,overlaps,weaponBox,lerpCapsule,sweptContact,ACTIVE_START,ACTIVE_END} from './geometry';
+import {hitboxes,hurtboxes,overlaps,weaponBoxes,lerpCapsule,sweptContact,ACTIVE_START,ACTIVE_END,type Capsule} from './geometry';
 export type Action='idle'|'punch'|'kick'|'block'|'dodge'|'hurt';
 export interface Fighter{x:number;y:number;vy:number;jumps:number;jumpAge:number;jumpHeld:boolean;hp:number;energy:number;face:number;action:Action;timer:number;duration:number;hit:boolean;cooldown:number;walk:number}
 export interface Input{left?:boolean;right?:boolean;jump?:boolean;punch?:boolean;kick?:boolean;block?:boolean;dodge?:boolean}
@@ -19,7 +19,7 @@ export class Combat{
  const move=(i.right?1:0)-(i.left?1:0);if(f.action==='idle'){f.x+=move*225*dt;f.walk+=Math.abs(move)*dt*11}else if(f.action==='dodge')f.x-=f.face*340*dt;
  f.x=Math.max(95,Math.min(1105,f.x));if(f.y>0){f.jumpAge+=dt;f.vy-=1200*dt;f.y=Math.max(0,f.y+f.vy*dt);if(f.y===0){f.vy=0;f.jumps=0}}}
  resolve(f:Fighter,o:Fighter,previousF?:Fighter,previousO?:Fighter,previousTime=this.elapsed,currentF=f,currentO=o){
- let box=hitbox(currentF,this.elapsed);let kind=currentF.action;
+ const targets=hurtboxes(currentO,this.elapsed);let box:Capsule|null=hitboxes(currentF,this.elapsed).find(a=>targets.some(b=>overlaps(a,b)))??null;let kind=currentF.action;
  if(previousF&&previousO&&['punch','kick'].includes(previousF.action)&&!previousF.hit&&!f.hit){
   kind=previousF.action;
   // Clip to the active portion, including frames that cross its start or end.
@@ -32,16 +32,16 @@ export class Combat{
   box=null;
   if(start<=end&&start<=1&&end>=0&&fromPhase>=ACTIVE_END&&toPhase<=ACTIVE_START){
    const endF={...currentF,action:previousF.action,duration:previousF.duration,timer:Math.max(0,previousF.timer-elapsed)};
-   const a0=weaponBox(previousF,previousTime),a1=weaponBox(endF,this.elapsed);
+   const a0=weaponBoxes(previousF,previousTime),a1=weaponBoxes(endF,this.elapsed);
    const b0=hurtboxes(previousO,previousTime),b1=hurtboxes(currentO,this.elapsed);
    let first=Infinity;
-   for(let i=0;i<b0.length;i++){
-    const contact=sweptContact(lerpCapsule(a0,a1,start),lerpCapsule(a0,a1,end),lerpCapsule(b0[i],b1[i],start),lerpCapsule(b0[i],b1[i],end));
-    if(contact!==null)first=Math.min(first,start+(end-start)*contact);
+   for(let j=0;j<a0.length;j++)for(let i=0;i<b0.length;i++){
+    const contact=sweptContact(lerpCapsule(a0[j],a1[j],start),lerpCapsule(a0[j],a1[j],end),lerpCapsule(b0[i],b1[i],start),lerpCapsule(b0[i],b1[i],end));
+    if(contact!==null){const at=start+(end-start)*contact;if(at<first){first=at;box=lerpCapsule(a0[j],a1[j],at)}}
    }
-   if(first!==Infinity)box=lerpCapsule(a0,a1,first);
+
   }
- }else if(!box||!hurtboxes(currentO,this.elapsed).some(h=>overlaps(box!,h)))box=null;
+ }
  if(!box||f.hit)return;
  f.hit=true;const blocked=currentO.action==='block'&&o.energy>=8;const damage=kind==='kick'?15:9;
  o.hp=Math.max(0,o.hp-(blocked?damage*.15:damage));o.energy=Math.max(0,o.energy-(blocked?10:0));
