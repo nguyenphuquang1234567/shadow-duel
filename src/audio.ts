@@ -3,16 +3,33 @@ export const audioManifest = {
   punch: '/audio/punch-hit.wav', kick: '/audio/kick-hit.wav',
   block: '/audio/block.wav', dodge: '/audio/dodge.wav',
 } as const;
+export const musicAsset = '/audio/background-music.mp3';
 export type SoundKey = keyof typeof audioManifest;
 export class CombatAudio {
-  enabled = false;
+  private soundEnabled = false;
+  private music = new Audio(musicAsset);
+  constructor() {
+    this.music.id = 'background-music';
+    this.music.loop = true;
+    this.music.volume = .12;
+    this.music.preload = 'metadata';
+    this.music.hidden = true;
+    document.body.append(this.music);
+  }
+  get enabled() { return this.soundEnabled; }
+  set enabled(value: boolean) {
+    this.soundEnabled = value;
+    if (!value) this.music.pause();
+  }
   private context?: AudioContext;
   private master?: DynamicsCompressorNode;
   private loading?: Promise<void>;
   private buffers = new Map<SoundKey, AudioBuffer>();
   async enable() {
+    // Start from the user's click, so browser autoplay policy permits music.
+    const musicReady = this.enabled ? this.music.play() : Promise.resolve();
     this.context ??= new AudioContext();
-    await this.context.resume();
+    await Promise.all([this.context.resume(), musicReady]);
     if (!this.master) {
       this.master = this.context.createDynamicsCompressor();
       this.master.threshold.value = -12;
