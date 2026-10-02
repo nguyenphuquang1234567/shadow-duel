@@ -18,7 +18,27 @@ export function pose(f:Fighter,t:number){
  const fist={x:neck.x+f.face*(block?24:9),y:neck.y+(block?-19:12)};
  const e2={x:neck.x+f.face*(punch?45*strike:24),y:neck.y+15};
  const h2={x:neck.x+f.face*(punch?94*strike:block?29:33),y:neck.y+(block?-25:punch?10:-3)};
- return {x,y,phase,strike,punch,kick,block,dodge,hurt,hip,neck,head,backKnee,backFoot,knee,foot,shoulder,elbow,fist,e2,h2};
+ // A first jump has a readable tucked-leg silhouette; the second rolls.
+ if(f.y>0&&f.action==='idle'){
+  backKnee.x=x-f.face*28;backKnee.y=y-43;
+  backFoot.x=x-f.face*15;backFoot.y=y-17;
+  knee.x=x+f.face*31;knee.y=y-62;
+  foot.x=x+f.face*12;foot.y=y-34;
+  elbow.x=neck.x-f.face*33;elbow.y=neck.y+13;
+  fist.x=neck.x-f.face*43;fist.y=neck.y-9;
+  e2.x=neck.x+f.face*32;e2.y=neck.y+10;
+  h2.x=neck.x+f.face*45;h2.y=neck.y-12;
+ }
+ const points={hip,neck,head,backKnee,backFoot,knee,foot,shoulder,elbow,fist,e2,h2};
+ if(f.y>0&&f.jumps===2){
+  const angle=Math.min(1,f.jumpAge/.45)*Math.PI*2*f.face;
+  const cx=x,cy=y-70,cos=Math.cos(angle),sin=Math.sin(angle);
+  for(const point of Object.values(points)){
+   const dx=point.x-cx,dy=point.y-cy;
+   point.x=cx+dx*cos-dy*sin;point.y=cy+dx*sin+dy*cos;
+  }
+ }
+ return {x,y,phase,strike,punch,kick,block,dodge,hurt,...points};
 }
 export function hurtboxes(f:Fighter,t:number):Capsule[]{const p=pose(f,t);return[
  {a:p.head,b:p.head,r:15,part:'head'}, {a:p.hip,b:p.neck,r:12,part:'torso'},
