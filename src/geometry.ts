@@ -29,7 +29,9 @@ export function pose(f:Fighter,t:number){
   e2.x=neck.x+f.face*32;e2.y=neck.y+10;
   h2.x=neck.x+f.face*45;h2.y=neck.y-12;
  }
- const points={hip,neck,head,backKnee,backFoot,knee,foot,shoulder,elbow,fist,e2,h2};
+ const backToe={x:backFoot.x+f.face*15,y:backFoot.y};
+ const toe={x:foot.x+f.face*13,y:foot.y-2};
+ const points={hip,neck,head,backKnee,backFoot,backToe,knee,foot,toe,shoulder,elbow,fist,e2,h2};
  if(f.y>0&&f.jumps===2){
   const angle=Math.min(1,f.jumpAge/.45)*Math.PI*2*f.face;
   const cx=x,cy=y-70,cos=Math.cos(angle),sin=Math.sin(angle);
@@ -50,7 +52,7 @@ export function hitbox(f:Fighter,t:number):Capsule|null {
  if(!['punch','kick'].includes(f.action)||f.hit)return null;
  const p=pose(f,t); // Only the extended part of the animation can deal damage.
  if(p.phase>ACTIVE_START||p.phase<ACTIVE_END)return null;
- return p.punch?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:{x:p.foot.x+f.face*13,y:p.foot.y-2},r:5,part:'foot'};
+ return p.punch?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:p.toe,r:5,part:'foot'};
 }
 function distance(p:Point,a:Point,b:Point){const dx=b.x-a.x,dy=b.y-a.y;const length=dx*dx+dy*dy;const t=length?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/length)):0;return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)}
 function cross(a:Point,b:Point,c:Point){return(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)}
@@ -91,5 +93,5 @@ export function sweptContact(a0:Capsule,a1:Capsule,b0:Capsule,b1:Capsule):number
 /** Un-gated weapon geometry used when clipping a sweep to the active window. */
 export function weaponBox(f:Fighter,t:number):Capsule{
  const p=pose(f,t);
- return f.action==='punch'?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:{x:p.foot.x+f.face*13,y:p.foot.y-2},r:5,part:'foot'};
+ return f.action==='punch'?{a:p.h2,b:p.h2,r:8,part:'fist'}:{a:p.foot,b:p.toe,r:5,part:'foot'};
 }
