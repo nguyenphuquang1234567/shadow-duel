@@ -99,7 +99,7 @@ test('stronger bots preserve attack variety, stamina reserve, corner defense and
 test('PPO policy loads only when opted in and validates actor layers',async({page})=>{
  const policy={version:1,observationSize:53,actionNames:['idle','toward','away','punch','kick','block','dodge','jump','toward-jump','away-jump','toward-punch','toward-kick'],layers:[{weight:Array.from({length:12},()=>Array(53).fill(0)),bias:Array(12).fill(0),activation:'linear'}]};
  await page.route('**/models/rl-policy.json',r=>r.fulfill({json:policy}));
- await page.goto('/?rl=1');
+ await page.goto('http://localhost:5173/?rl=1');
  await expect(page).toHaveTitle(/PPO bot/);
  expect(await page.evaluate(async(policy)=>{const {policyAction}=await import('/src/rl.ts');const valid=policyAction(policy,Array(53).fill(0));policy.layers[0].weight[0]=[];try{policyAction(policy,Array(53).fill(0));return false}catch{return valid===0}},policy)).toBe(true);
 });
