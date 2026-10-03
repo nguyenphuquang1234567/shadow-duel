@@ -1,0 +1,9 @@
+.git/
+node_modules/
+.venv-rl/
+rl/runs/
+rl/dist/
+__pycache__/
+test-results/
+playwright-report/
+preview-*.png
