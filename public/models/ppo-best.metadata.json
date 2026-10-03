@@ -1,0 +1,14 @@
+{
+  "algorithm": "PPO",
+  "training_run_steps": 1000448,
+  "selected_checkpoint_steps": 920000,
+  "selection": "highest mean reward in five hard-bot evaluation episodes",
+  "heldout_games_per_level": 30,
+  "heldout_wins_per_level": [
+    30,
+    30,
+    30
+  ],
+  "seed": 42,
+  "sha256": "ea4f628fbe3dcd068ea51082a02a8c5cc7853345be1f934d3339cf352e185cae"
+}

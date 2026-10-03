@@ -3,18 +3,38 @@ import {pose,hitboxes,hurtboxes,type Capsule} from './geometry';
 import {CombatAudio} from './audio';
 import Phaser from 'phaser';import './style.css';import {Combat,type Fighter,type Input} from './combat';
 const sim=new Combat();const $=(id:string)=>document.getElementById(id)!;let debugBoxes=false;let wins=[0,0],round=1,started=false,sound=true;const held=new Set<string>();const mapping:Record<string,string>={ArrowLeft:'A',ArrowRight:'D',ArrowUp:'W',' ':'SPACE'};
-// Opt-in only: export a trained model to public/models/rl-policy.json.
-if(new URLSearchParams(location.search).get('rl')==='1'){
- void fetch('/models/rl-policy.json').then(r=>{if(!r.ok)throw new Error('Missing RL model');return r.json()}).then((policy:PolicyData)=>{
-  policyAction(policy,observation(sim.b,sim.p,sim));
+let mode:'scripted'|'rl'='scripted',selection=0;
+let policyPromise:Promise<PolicyData>|undefined;
+function selectScripted(level:number){
+ selection++;mode='scripted';sim.level=level;sim.botController=undefined;sim.think=0;sim.bot={};
+ document.title='Shadow Duel — Đấu với bóng tối';
+ document.querySelectorAll<HTMLButtonElement>('[data-level]').forEach(b=>b.classList.toggle('active',Number(b.dataset.level)===level));
+ $('rl-mode').classList.remove('active');$('rl-mode').setAttribute('aria-pressed','false');
+ $('rl-status').textContent='Đấu với model tốt nhất sau 1 triệu bước luyện tập.';
+ ($('start') as HTMLButtonElement).disabled=false;
+}
+async function selectRL(){
+ const ticket=++selection;mode='rl';sim.botController=undefined;
+ document.querySelectorAll('[data-level]').forEach(b=>b.classList.remove('active'));
+ $('rl-mode').classList.add('active');$('rl-mode').setAttribute('aria-pressed','true');
+ $('rl-status').textContent='Đang tải bot AI…';($('start') as HTMLButtonElement).disabled=true;
+ try{
+  policyPromise??=fetch('/models/ppo-best.json').then(r=>{if(!r.ok)throw new Error('Missing RL model');return r.json()}).then((policy:PolicyData)=>{policyAction(policy,observation(sim.b,sim.p,sim));return policy});
+  const policy=await policyPromise;if(ticket!==selection||mode!=='rl')return;
   sim.botController=(self,other,combat)=>actionInput(policyAction(policy,observation(self,other,combat)),self,other);
-  document.title+=' · PPO bot';
- }).catch(error=>{console.error(error);$('description').textContent='Chưa tải được model PPO. Bot hiện tại vẫn hoạt động.'});
+  sim.think=0;sim.bot={};document.title='Shadow Duel — Đấu với bóng tối · PPO bot';
+  $('rl-status').textContent='Sẵn sàng · Model tốt nhất sau 1 triệu bước luyện tập.';
+  ($('start') as HTMLButtonElement).disabled=false;
+ }catch(error){policyPromise=undefined;if(ticket!==selection)return;
+  $('rl-status').textContent='Tải bot AI thất bại. Bấm lại để thử hoặc chọn bot thường.';console.error(error);
+ }
 }
 const combatAudio=new CombatAudio();combatAudio.enabled=true;$('sound').textContent='Âm thanh: bật';
-function pause(){if(!started||!sim.active)return;sim.paused=!sim.paused;$('overlay').classList.toggle('hidden',!sim.paused);if(sim.paused){$('result').hidden=false;$('description').hidden=false;$('result').textContent='Nghỉ một nhịp.';$('description').textContent='Trận đấu đang tạm dừng.';$('start').textContent='TIẾP TỤC ↗';document.querySelector<HTMLElement>('.difficulties')!.style.display='none'}}
+function pause(){if(!started||!sim.active)return;sim.paused=!sim.paused;$('overlay').classList.toggle('hidden',!sim.paused);if(sim.paused){$('result').hidden=false;$('description').hidden=false;$('result').textContent='Nghỉ một nhịp.';$('description').textContent='Trận đấu đang tạm dừng.';$('start').textContent='TIẾP TỤC ↗';document.querySelector<HTMLElement>('.mode-picker')!.style.display='none'}}
 window.addEventListener('keydown',e=>{const k=mapping[e.key]??e.key.toUpperCase();if(k==='H'&&!e.repeat)debugBoxes=!debugBoxes;if(['A','D','W','J','K','L','SPACE','ESCAPE'].includes(k)){e.preventDefault();if(k==='ESCAPE'&&!e.repeat)pause();else held.add(k)}});window.addEventListener('keyup',e=>held.delete(mapping[e.key]??e.key.toUpperCase()));window.addEventListener('blur',()=>{held.clear();if(sim.active&&!sim.paused)pause()});document.querySelectorAll<HTMLButtonElement>('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held.add(b.dataset.key!)};b.onpointerup=b.onpointercancel=()=>held.delete(b.dataset.key!)});
-$('pause').onclick=pause;$('sound').onclick=async()=>{sound=!sound;combatAudio.enabled=sound;$('sound').textContent=`Âm thanh: ${sound?'bật':'tắt'}`;if(sound){try{await combatAudio.enable();combatAudio.play('punch')}catch{sound=false;combatAudio.enabled=false;$('sound').textContent='Âm thanh: tải lỗi'}}};document.querySelectorAll<HTMLButtonElement>('[data-level]').forEach(b=>b.onclick=()=>{sim.level=Number(b.dataset.level);document.querySelectorAll('[data-level]').forEach(e=>e.classList.remove('active'));b.classList.add('active')});$('start').onclick=()=>{if(sound){void combatAudio.enable().catch(()=>{$('sound').textContent='Âm thanh: tải lỗi'})}if(sim.paused)sim.paused=false;else{if(!started||wins.some(n=>n>=2)){wins=[0,0];round=1}sim.reset();started=true}$('overlay').classList.add('hidden');held.clear()};
+$('pause').onclick=pause;$('sound').onclick=async()=>{sound=!sound;combatAudio.enabled=sound;$('sound').textContent=`Âm thanh: ${sound?'bật':'tắt'}`;if(sound){try{await combatAudio.enable();combatAudio.play('punch')}catch{sound=false;combatAudio.enabled=false;$('sound').textContent='Âm thanh: tải lỗi'}}};document.querySelectorAll<HTMLButtonElement>('[data-level]').forEach(b=>b.onclick=()=>selectScripted(Number(b.dataset.level)));$('start').onclick=()=>{if(sound){void combatAudio.enable().catch(()=>{$('sound').textContent='Âm thanh: tải lỗi'})}if(sim.paused)sim.paused=false;else{if(!started||wins.some(n=>n>=2)){wins=[0,0];round=1}sim.reset();started=true}$('overlay').classList.add('hidden');held.clear()};
+$('rl-mode').onclick=()=>{void selectRL()};
+if(new URLSearchParams(location.search).get('rl')==='1')void selectRL();
 class Arena extends Phaser.Scene{g!:Phaser.GameObjects.Graphics;fx:{x:number;y:number;life:number;blocked:boolean}[]=[];create(){this.paintBackground();this.g=this.add.graphics();}
  paintBackground(){const g=this.add.graphics();g.fillGradientStyle(0x8b9b88,0x8b9b88,0x344840,0x344840,1);g.fillRect(0,0,1200,600);g.fillStyle(0xe9dba9,.75);g.fillCircle(620,182,68);g.fillStyle(0xc2ceb1,.2);g.fillCircle(620,182,91);
  for(let layer=0;layer<3;layer++){g.fillStyle([0x667b69,0x4b6356,0x304a40][layer],.8);g.beginPath();g.moveTo(0,400);for(let x=0;x<=1250;x+=70)g.lineTo(x,260+layer*42+Math.sin(x*.008+layer)*40+Math.cos(x*.019)*25);g.lineTo(1200,500);g.lineTo(0,500);g.closePath();g.fillPath()}
@@ -30,6 +50,6 @@ line(shoulder,elbow,13);line(elbow,fist,11);line(shoulder,e2,14);line(e2,h2,11);
  g.lineStyle(4,color);g.lineBetween(hip.x-12,hip.y-2,hip.x+12,hip.y+1);g.lineStyle(3,color);g.lineBetween(neck.x-12,neck.y-28,neck.x+12,neck.y-28);g.lineBetween(neck.x-f.face*10,neck.y-28,neck.x-f.face*35,neck.y-20+Math.sin(t*8)*4);if(block){g.lineStyle(2,0xc8dcca,.4);g.beginPath();g.arc(x+f.face*15,y-85,53,-1.3,1.3,f.face<0);g.strokePath()}}
  update(time:number,delta:number){const input:Input={left:held.has('A'),right:held.has('D'),jump:held.has('W'),punch:held.has('J'),kick:held.has('K'),block:held.has('L'),dodge:held.has('SPACE')};sim.step(delta/1000,input);for(const key of sim.sounds.splice(0))combatAudio.play(key);this.g.clear();this.drawFighter(sim.p,0xcabb8b,sim.elapsed);this.drawFighter(sim.b,0xc0775b,sim.elapsed);if(debugBoxes){const draw=(c:Capsule,color:number)=>{this.g.lineStyle(c.r*2,color,.3);this.g.lineBetween(c.a.x,c.a.y,c.b.x,c.b.y);this.g.fillStyle(color,.3);this.g.fillCircle(c.a.x,c.a.y,c.r);this.g.fillCircle(c.b.x,c.b.y,c.r)};for(const f of [sim.p,sim.b]){for(const h of hurtboxes(f,sim.elapsed))draw(h,0x53d9f5);for(const h of hitboxes(f,sim.elapsed))draw(h,0xff4c55)}}for(const event of sim.events.splice(0)){this.fx.push({...event,life:.25});this.cameras.main.shake(event.blocked?35:65,event.blocked?.001:.003);combatAudio.play(event.blocked?'block':event.kind)}this.fx=this.fx.filter(e=>e.life>0);for(const e of this.fx){e.life-=delta/1000;this.g.lineStyle(2,e.blocked?0xc7ddc8:0xffd6a0,Math.max(0,e.life*4));for(let j=0;j<8;j++){const a=j*Math.PI/4;const r=(.25-e.life)*150;this.g.lineBetween(e.x+Math.cos(a)*r,e.y+Math.sin(a)*r,e.x+Math.cos(a)*(r+10),e.y+Math.sin(a)*(r+10))}}
  for(const [prefix,f] of [['p',sim.p],['b',sim.b]] as const){$(`${prefix}-health`).style.width=`${f.hp}%`;$(`${prefix}-energy`).style.width=`${f.energy}%`}$('time').textContent=String(Math.ceil(sim.time)).padStart(2,'0');$('round').textContent=`ROUND ${String(round).padStart(2,'0')} · ${wins[0]} : ${wins[1]}`;
- if(sim.winner){$('result').hidden=false;$('description').hidden=false;const winner=sim.winner;sim.winner='';if(winner==='player')wins[0]++;if(winner==='bot')wins[1]++;const match=wins.some(n=>n>=2);$('result').textContent=winner==='draw'?'Hòa hiệp này.':winner==='player'?(match?'Anh thắng trận!':'Anh thắng hiệp!'):(match?'Bot thắng trận.':'Bot thắng hiệp.');$('description').textContent=match?`Tỉ số ${wins[0]} : ${wins[1]} · Một trận mới đang chờ.`:'Giữ đỡ để giảm sát thương. Né khi bot bắt đầu tung đòn.';$('start').textContent=match?'ĐẤU LẠI ↗':'HIỆP TIẾP THEO ↗';document.querySelector<HTMLElement>('.difficulties')!.style.display=match?'flex':'none';if(!match)round++;$('overlay').classList.remove('hidden')}
+ if(sim.winner){$('result').hidden=false;$('description').hidden=false;const winner=sim.winner;sim.winner='';if(winner==='player')wins[0]++;if(winner==='bot')wins[1]++;const match=wins.some(n=>n>=2);$('result').textContent=winner==='draw'?'Hòa hiệp này.':winner==='player'?(match?'Anh thắng trận!':'Anh thắng hiệp!'):(match?'Bot thắng trận.':'Bot thắng hiệp.');$('description').textContent=match?`Tỉ số ${wins[0]} : ${wins[1]} · Một trận mới đang chờ.`:'Giữ đỡ để giảm sát thương. Né khi bot bắt đầu tung đòn.';$('start').textContent=match?'ĐẤU LẠI ↗':'HIỆP TIẾP THEO ↗';document.querySelector<HTMLElement>('.mode-picker')!.style.display=match?'block':'none';if(!match)round++;$('overlay').classList.remove('hidden')}
  }}
 new Phaser.Game({type:Phaser.AUTO,parent:'game',width:1200,height:600,backgroundColor:'#344840',scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:Arena});

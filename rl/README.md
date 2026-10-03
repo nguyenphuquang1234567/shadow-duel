@@ -35,14 +35,19 @@ For an unattended local run, this command keeps macOS awake while training. It w
 caffeinate -i .venv-rl/bin/python rl/train.py --steps 2000000 --run rl/runs/overnight
 ```
 
-## Try a trained policy in the browser
+## Play against the trained bot
+
+Run `npm run dev`, then open `http://localhost:5173/`. The menu has a separate **Thử thách AI → Bot AI đã luyện** section below Dễ/Vừa/Khó. Select it, wait for Sẵn sàng, and start the match. Selecting a regular difficulty restores the scripted bot. `?rl=1` preselects the trained bot.
+
+The bundled `public/models/ppo-best.json` is the best checkpoint from the 1,000,448-transition run (selected at 920,000 transitions). Its held-out evaluation won 30/30 games per scripted difficulty. This is not a human-player benchmark. The adjacent metadata file records checkpoint selection, results and the policy SHA-256. Only the exported actor and metadata are committed, not Python training checkpoints.
+
+To replace this local artifact after a new run:
 
 ```sh
-.venv-rl/bin/python rl/export.py rl/runs/ppo/best/best_model.zip public/models/rl-policy.json
-npm run dev
+.venv-rl/bin/python rl/export.py rl/runs/ppo/best/best_model.zip public/models/ppo-best.json
 ```
 
-Open `http://localhost:5173/?rl=1`. Without that query, the existing bot stays active. With it, the loaded PPO replaces scripted decisions; difficulty buttons do not change the loaded model. The browser uses deterministic argmax actions from a small exported dense network. Loading failure reports an error and keeps the scripted bot. Reload after exporting a different model. This model is local and ignored by Git; deployment would need an explicit model artifact. Only load trusted SB3 checkpoint files.
+Reload after exporting; update the metadata for the replacement. The browser uses deterministic argmax actions. Failed downloads block AI match start and let the player retry or select a regular mode. Only load trusted SB3 checkpoint files.
 
 ## Verification and current result
 
