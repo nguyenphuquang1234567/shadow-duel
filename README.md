@@ -28,3 +28,7 @@ Run `npx playwright test` for collision regressions and browser smoke testing; t
 On `feature/stronger-normal-hard-bots`, Easy keeps the original choices and 420 ms decision interval. Normal decides every 120 ms; Hard every 65 ms. They sample weighted legal actions rather than selecting a single highest-scoring action. Close range favors punches, longer range favors kicks; stamina reserves, recovery-window aggression, room-aware dodge, and short-lived memory of repeated player attacks improve defense. Damage, health, movement speed, jump rules and attack cooldowns are shared with the player.
 
 Run `node scripts/benchmark-bots.mjs` with the local Vite server running to compare against baseline commit `b5cc4be`. In 32 seeded, 30-second encounters against a fixed approach-and-spam-kick policy, Normal won 20 versus 1 baseline, and Hard won 27 versus 10 baseline. These are scenario-specific results, not win-rate guarantees against humans.
+
+## Experimental reinforcement learning
+
+The separate PPO pipeline, checkpoint/resume commands, evaluation and opt-in browser model are documented in [rl/README.md](rl/README.md). The default game continues to use the scripted bot.

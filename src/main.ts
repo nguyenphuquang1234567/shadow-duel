@@ -1,7 +1,16 @@
+import {observation,actionInput,policyAction,type PolicyData} from './rl';
 import {pose,hitboxes,hurtboxes,type Capsule} from './geometry';
 import {CombatAudio} from './audio';
 import Phaser from 'phaser';import './style.css';import {Combat,type Fighter,type Input} from './combat';
 const sim=new Combat();const $=(id:string)=>document.getElementById(id)!;let debugBoxes=false;let wins=[0,0],round=1,started=false,sound=true;const held=new Set<string>();const mapping:Record<string,string>={ArrowLeft:'A',ArrowRight:'D',ArrowUp:'W',' ':'SPACE'};
+// Opt-in only: export a trained model to public/models/rl-policy.json.
+if(new URLSearchParams(location.search).get('rl')==='1'){
+ void fetch('/models/rl-policy.json').then(r=>{if(!r.ok)throw new Error('Missing RL model');return r.json()}).then((policy:PolicyData)=>{
+  policyAction(policy,observation(sim.b,sim.p,sim));
+  sim.botController=(self,other,combat)=>actionInput(policyAction(policy,observation(self,other,combat)),self,other);
+  document.title+=' · PPO bot';
+ }).catch(error=>{console.error(error);$('description').textContent='Chưa tải được model PPO. Bot hiện tại vẫn hoạt động.'});
+}
 const combatAudio=new CombatAudio();combatAudio.enabled=true;$('sound').textContent='Âm thanh: bật';
 function pause(){if(!started||!sim.active)return;sim.paused=!sim.paused;$('overlay').classList.toggle('hidden',!sim.paused);if(sim.paused){$('result').hidden=false;$('description').hidden=false;$('result').textContent='Nghỉ một nhịp.';$('description').textContent='Trận đấu đang tạm dừng.';$('start').textContent='TIẾP TỤC ↗';document.querySelector<HTMLElement>('.difficulties')!.style.display='none'}}
 window.addEventListener('keydown',e=>{const k=mapping[e.key]??e.key.toUpperCase();if(k==='H'&&!e.repeat)debugBoxes=!debugBoxes;if(['A','D','W','J','K','L','SPACE','ESCAPE'].includes(k)){e.preventDefault();if(k==='ESCAPE'&&!e.repeat)pause();else held.add(k)}});window.addEventListener('keyup',e=>held.delete(mapping[e.key]??e.key.toUpperCase()));window.addEventListener('blur',()=>{held.clear();if(sim.active&&!sim.paused)pause()});document.querySelectorAll<HTMLButtonElement>('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held.add(b.dataset.key!)};b.onpointerup=b.onpointercancel=()=>held.delete(b.dataset.key!)});

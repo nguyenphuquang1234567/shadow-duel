@@ -95,3 +95,11 @@ test('stronger bots preserve attack variety, stamina reserve, corner defense and
   return{punch,kick,low,still,restored,wall,first,same,repeat,reset:memory.kicks,hurt,intervals:botDecisionIntervals};
  });expect(r.punch.punch).toBe(true);expect(r.kick.kick).toBe(true);expect(r.low.left).toBe(true);expect(r.still.left).toBe(true);expect(r.restored.punch).toBe(true);expect(r.wall).toEqual({block:true});expect(r.same).toBeLessThan(r.first);expect(r.repeat).toBeGreaterThan(r.first);expect(r.reset).toBe(0);expect(r.hurt).toEqual({});expect(r.intervals).toEqual([.42,.12,.065]);
 });
+
+test('PPO policy loads only when opted in and validates actor layers',async({page})=>{
+ const policy={version:1,observationSize:53,actionNames:['idle','toward','away','punch','kick','block','dodge','jump','toward-jump','away-jump','toward-punch','toward-kick'],layers:[{weight:Array.from({length:12},()=>Array(53).fill(0)),bias:Array(12).fill(0),activation:'linear'}]};
+ await page.route('**/models/rl-policy.json',r=>r.fulfill({json:policy}));
+ await page.goto('/?rl=1');
+ await expect(page).toHaveTitle(/PPO bot/);
+ expect(await page.evaluate(async(policy)=>{const {policyAction}=await import('/src/rl.ts');const valid=policyAction(policy,Array(53).fill(0));policy.layers[0].weight[0]=[];try{policyAction(policy,Array(53).fill(0));return false}catch{return valid===0}},policy)).toBe(true);
+});

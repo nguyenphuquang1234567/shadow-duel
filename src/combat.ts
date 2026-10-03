@@ -4,13 +4,15 @@ export type Action='idle'|'punch'|'kick'|'block'|'dodge'|'hurt'|'down';
 export interface Fighter{x:number;y:number;vy:number;jumps:number;jumpAge:number;downAge:number;jumpHeld:boolean;hp:number;energy:number;face:number;action:Action;timer:number;duration:number;hit:boolean;cooldown:number;walk:number}
 export interface Input{left?:boolean;right?:boolean;jump?:boolean;punch?:boolean;kick?:boolean;block?:boolean;dodge?:boolean}
 export class Combat{
+ constructor(public random:()=>number=Math.random){}
+ botController?: (self:Fighter,opponent:Fighter,combat:Combat)=>Input;
  botMemory=new BotMemory();
  p=this.make(350,1);b=this.make(850,-1);time=90;elapsed=0;active=false;paused=false;level=1;think=0;bot:Input={};winner='';pendingWinner='';resultDelay=0; events:{x:number;y:number;blocked:boolean;kind:'punch'|'kick'}[]=[];sounds:'dodge'[]=[];
  make(x:number,face:number):Fighter{return{x,y:0,vy:0,jumps:0,jumpAge:0,downAge:0,jumpHeld:false,hp:100,energy:100,face,action:'idle',timer:0,duration:0,hit:false,cooldown:0,walk:0}}
  reset(){this.botMemory.reset();this.p=this.make(350,1);this.b=this.make(850,-1);this.time=90;this.elapsed=0;this.winner='';this.pendingWinner='';this.resultDelay=0;this.active=true;this.paused=false;this.bot={};this.think=0;this.events=[];this.sounds=[]}
  attack(f:Fighter,a:Action){const cost=a==='kick'?23:a==='punch'?12:18;if(f.energy<cost||f.cooldown>0||f.action==='hurt'||f.timer>0)return;f.energy-=cost;if(a==='dodge')this.sounds.push('dodge');f.action=a;f.duration=a==='kick'?.55:a==='punch'?.34:.35;f.timer=f.duration;f.hit=false;f.cooldown=f.duration+.12}
  step(dt:number,input:Input){if(this.paused)return;dt=Math.min(dt,.035);if(this.pendingWinner){this.elapsed+=dt;for(const f of [this.p,this.b])if(f.action==='down'){f.downAge+=dt;f.y=Math.max(0,f.y-500*dt)}this.resultDelay=Math.max(0,this.resultDelay-dt);if(this.resultDelay===0){this.winner=this.pendingWinner;this.pendingWinner=''}return}if(!this.active)return;const previousP={...this.p},previousB={...this.b},previousTime=this.elapsed;this.time=Math.max(0,this.time-dt);this.elapsed+=dt;this.think-=dt;this.botMemory.observe(this.p,dt);
- if(this.think<=0){this.think=botDecisionIntervals[this.level];this.bot=chooseBotAction(this.b,this.p,this.level,Math.random,this.botMemory);}
+ if(this.think<=0){this.think=this.botController ? .1 : botDecisionIntervals[this.level];this.bot=this.botController?this.botController(this.b,this.p,this):chooseBotAction(this.b,this.p,this.level,this.random,this.botMemory);}
  this.update(this.p,this.b,input,dt);this.update(this.b,this.p,this.bot,dt);this.bot.jump=false;if(Math.abs(this.p.x-this.b.x)<58&&Math.abs(this.p.y-this.b.y)<70){const middle=(this.p.x+this.b.x)/2;this.p.x=middle-29*this.p.face;this.b.x=middle+29*this.p.face;}
  const currentP={...this.p},currentB={...this.b};
  this.resolve(this.p,this.b,previousP,previousB,previousTime,currentP,currentB);this.resolve(this.b,this.p,previousB,previousP,previousTime,currentB,currentP);

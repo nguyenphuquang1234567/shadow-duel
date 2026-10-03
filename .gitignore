@@ -8,3 +8,8 @@ preview-*.png
 test-results/
 playwright-report/
 .vercel
+.venv-rl/
+rl/dist/
+rl/runs/
+__pycache__/
+public/models/rl-policy.json
