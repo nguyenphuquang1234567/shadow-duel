@@ -83,3 +83,15 @@ test('KO falls down and waits one second before announcing results; reset clears
   return{initial,halfway,horizontal,end,reset,both};
  });expect(r).toEqual({initial:{active:false,action:'down',winner:''},halfway:{winner:'',hp:100},horizontal:true,end:'player',reset:{pending:'',age:0,action:'idle'},both:['down','down']});
 });
+test('stronger bots preserve attack variety, stamina reserve, corner defense and memory reset',async({page})=>{
+ await page.goto('http://localhost:5173');const r=await page.evaluate(async()=>{
+  const{Combat}=await import('/src/combat.ts');const{chooseBotAction,BotMemory,botDecisionIntervals}=await import('/src/bot.ts');
+  const c=new Combat();c.b.x=500;c.p.x=590;const memory=new BotMemory();
+  const punch=chooseBotAction(c.b,c.p,2,()=>.1,memory),kick=chooseBotAction(c.b,c.p,2,()=>.8,memory);
+  c.b.energy=20;const low=chooseBotAction(c.b,c.p,2,()=>.1,memory);c.b.energy=45;const still=chooseBotAction(c.b,c.p,2,()=>.1,memory);c.b.energy=65;const restored=chooseBotAction(c.b,c.p,2,()=>.1,memory);
+  c.b.x=95;c.p.x=195;c.b.jumps=2;c.p.action='kick';c.p.duration=.55;c.p.timer=.4;const wall=chooseBotAction(c.b,c.p,2,()=>0,memory);
+  memory.observe(c.p,.01);const first=memory.kicks;memory.observe(c.p,.01);const same=memory.kicks;c.p.timer=.5;memory.observe(c.p,.01);const repeat=memory.kicks;memory.reset();
+  c.b.action='hurt';const hurt=chooseBotAction(c.b,c.p,2,()=>0,memory);
+  return{punch,kick,low,still,restored,wall,first,same,repeat,reset:memory.kicks,hurt,intervals:botDecisionIntervals};
+ });expect(r.punch.punch).toBe(true);expect(r.kick.kick).toBe(true);expect(r.low.left).toBe(true);expect(r.still.left).toBe(true);expect(r.restored.punch).toBe(true);expect(r.wall).toEqual({block:true});expect(r.same).toBeLessThan(r.first);expect(r.repeat).toBeGreaterThan(r.first);expect(r.reset).toBe(0);expect(r.hurt).toEqual({});expect(r.intervals).toEqual([.42,.12,.065]);
+});
