@@ -4,10 +4,17 @@
   "observation_size": 59,
   "action_count": 13,
   "training_run_steps": 1000448,
-  "selected_checkpoint_steps": 1000000,
+  "total_training_steps": 2000448,
+  "selected_checkpoint_steps": 1550000,
   "seed": 42,
-  "seconds": 129.7443224999588,
-  "evaluation_seed": 300000,
+  "seconds": 136.44176720897667,
+  "rules": {
+    "max_hp": 200,
+    "punch_seconds": 0.34,
+    "kick_seconds": 0.55,
+    "post_attack_delay": 0
+  },
+  "evaluation_seed": 400000,
   "evaluation_deterministic": true,
   "selection": "highest mean reward from five hard-bot evaluation episodes",
   "heldout": [
@@ -17,8 +24,8 @@
       "loss": 0,
       "draw": 0,
       "win_rate": 1.0,
-      "mean_reward": 2.9519,
-      "super_uses": 30,
+      "mean_reward": 3.8024999999999998,
+      "super_uses": 53,
       "episodes_using_super": 30
     },
     {
@@ -27,8 +34,8 @@
       "loss": 0,
       "draw": 0,
       "win_rate": 1.0,
-      "mean_reward": 2.83885,
-      "super_uses": 30,
+      "mean_reward": 3.4563166666666665,
+      "super_uses": 63,
       "episodes_using_super": 30
     },
     {
@@ -37,10 +44,10 @@
       "loss": 0,
       "draw": 0,
       "win_rate": 1.0,
-      "mean_reward": 2.7373,
-      "super_uses": 30,
+      "mean_reward": 3.1334166666666667,
+      "super_uses": 65,
       "episodes_using_super": 30
     }
   ],
-  "sha256": "24b0a7dcdb05f6d61edbfbea1c8e731a21b3a22def984717539f50b2981e8440"
+  "sha256": "e26068319367bd9850cba6a7a866e026db339086bb4559301d41bc9dfb77089b"
 }
