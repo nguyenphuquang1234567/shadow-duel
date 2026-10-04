@@ -35,7 +35,7 @@ The separate PPO pipeline, checkpoint/resume commands, evaluation and opt-in bro
 
 ## Super: Ảnh Kích
 
-In Dễ/Vừa/Khó, both fighters have a Super meter. Real damage dealt charges it at 2 points per HP; damage received at 3 points per HP (blocked damage uses the reduced amount). Missed attacks grant nothing. At 100, press **I** or the mobile **ẢNH KÍCH** button while grounded and free to act.
+In Dễ/Vừa/Khó, both fighters have a Super meter. Real damage dealt charges it at 2 points per HP (blocked damage uses the reduced amount). Taking damage grants no charge. Missed attacks grant nothing. At 100, press **I** or the mobile **ẢNH KÍCH** button at any point during an active fight, including airborne or during another action. It cancels the current action regardless of stamina or cooldown.
 
 The move spends the full meter, immediately rushes forward with a 10-damage punch, then delivers a 15-damage kick. There is no separate windup or recovery lock; control returns as soon as the kick finishes. Both strikes use the existing swept limb hitboxes and can miss or be blocked; getting hit interrupts the move. It grants no invulnerability. Super damage does not recharge the attacker's meter. Normal bot difficulties use it with different probabilities, favouring recovery openings at higher levels.
 

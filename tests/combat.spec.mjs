@@ -166,11 +166,21 @@ test('super charges only from real damage and an incoming strike interrupts the 
   const {Combat}=await import('/src/combat.ts');
   const c=new Combat();c.reset();c.botController=()=>({});c.p.x=450;c.b.x=530;
   for(let i=0;i<25;i++)c.step(1/120,{punch:i===0});
-  const charged=c.p.superMeter===18&&c.b.superMeter===27;
+  const charged=c.p.superMeter===18&&c.b.superMeter===0;
   const miss=new Combat();miss.reset();miss.botController=()=>({});for(let i=0;i<45;i++)miss.step(1/120,{punch:i===0});
   const noFreeMeter=miss.p.superMeter===0&&miss.b.superMeter===0;
   const interrupted=new Combat();interrupted.reset();interrupted.p.x=450;interrupted.b.x=530;interrupted.p.superMeter=100;interrupted.botController=()=>({punch:true});
   for(let i=0;i<20;i++)interrupted.step(1/120,{super:i===0});
   return{charged,noFreeMeter,canceled:interrupted.p.hp<100&&interrupted.p.superStage===''&&interrupted.b.hp>=90};
  });expect(r).toEqual({charged:true,noFreeMeter:true,canceled:true});
+});
+test('full super cancels any live action on ground or in air without charging from damage',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const r=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');
+  return ['idle','punch','kick','block','dodge','hurt'].flatMap(action=>[0,150].map(y=>{
+   const c=new Combat();c.reset();c.botController=()=>({});Object.assign(c.p,{action,y,vy:0,timer:.2,duration:.34,cooldown:1,energy:0,superMeter:100});
+   c.step(1/120,{super:true});return c.p.action==='punch'&&c.p.superStage==='punch'&&c.p.superMeter===0&&c.p.energy<1;
+  }));
+ });expect(r).toEqual(Array(12).fill(true));
 });
