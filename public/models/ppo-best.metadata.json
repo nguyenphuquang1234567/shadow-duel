@@ -4,19 +4,21 @@
   "observation_size": 59,
   "action_count": 13,
   "training_run_steps": 1000448,
-  "total_training_steps": 2000448,
-  "selected_checkpoint_steps": 1550000,
+  "total_training_steps": 2550448,
+  "selected_checkpoint_steps": 1920000,
   "seed": 42,
-  "seconds": 136.44176720897667,
+  "seconds": 134.55567420786247,
   "rules": {
     "max_hp": 200,
     "punch_seconds": 0.34,
     "kick_seconds": 0.55,
-    "post_attack_delay": 0
+    "post_attack_delay": 0,
+    "attack_move_speed": 112.5,
+    "walk_speed": 225
   },
-  "evaluation_seed": 400000,
+  "evaluation_seed": 500000,
   "evaluation_deterministic": true,
-  "selection": "highest mean reward from five hard-bot evaluation episodes",
+  "selection": "highest mean reward from five hard-bot evaluation episodes within moving-attacks training run",
   "heldout": [
     {
       "level": 0,
@@ -24,8 +26,8 @@
       "loss": 0,
       "draw": 0,
       "win_rate": 1.0,
-      "mean_reward": 3.8024999999999998,
-      "super_uses": 53,
+      "mean_reward": 3.73575,
+      "super_uses": 60,
       "episodes_using_super": 30
     },
     {
@@ -34,8 +36,8 @@
       "loss": 0,
       "draw": 0,
       "win_rate": 1.0,
-      "mean_reward": 3.4563166666666665,
-      "super_uses": 63,
+      "mean_reward": 3.4302333333333332,
+      "super_uses": 60,
       "episodes_using_super": 30
     },
     {
@@ -44,10 +46,42 @@
       "loss": 0,
       "draw": 0,
       "win_rate": 1.0,
-      "mean_reward": 3.1334166666666667,
-      "super_uses": 65,
+      "mean_reward": 3.1593166666666668,
+      "super_uses": 61,
       "episodes_using_super": 30
     }
   ],
-  "sha256": "e26068319367bd9850cba6a7a866e026db339086bb4559301d41bc9dfb77089b"
+  "previous_actor_same_rules": [
+    {
+      "level": 0,
+      "win": 30,
+      "loss": 0,
+      "draw": 0,
+      "win_rate": 1.0,
+      "mean_reward": 3.7820499999999995,
+      "super_uses": 56,
+      "episodes_using_super": 30
+    },
+    {
+      "level": 1,
+      "win": 30,
+      "loss": 0,
+      "draw": 0,
+      "win_rate": 1.0,
+      "mean_reward": 3.3841499999999995,
+      "super_uses": 59,
+      "episodes_using_super": 30
+    },
+    {
+      "level": 2,
+      "win": 30,
+      "loss": 0,
+      "draw": 0,
+      "win_rate": 1.0,
+      "mean_reward": 3.1852500000000004,
+      "super_uses": 63,
+      "episodes_using_super": 30
+    }
+  ],
+  "sha256": "db8bb99eb3018561ad3e7b58fadc9bfc2948b405baeeb6d03d4d1a143155d85a"
 }

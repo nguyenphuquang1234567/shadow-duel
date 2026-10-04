@@ -219,3 +219,16 @@ test('default fighters start and reset at 200 HP with normalized AI health',asyn
   const c=new Combat();const initial=[c.p.hp,c.b.hp];c.p.hp=100;const half=observation(c.p,c.b,c)[4];c.reset();return{initial,half,reset:[c.p.hp,c.b.hp]};
  });expect(r.initial).toEqual([200,200]);expect(r.half).toBe(.5);expect(r.reset).toEqual([200,200]);
 });
+
+test('attacks move at half speed without walking animation; bots adjust attack range',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const r=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');const {chooseBotAction}=await import('/src/bot.ts');
+  const moves=['punch','kick'].map(action=>{const c=new Combat();c.attack(c.p,action);const x=c.p.x,w=c.p.walk;c.update(c.p,c.b,{right:true},.02);return{dx:c.p.x-x,walk:c.p.walk-w,action:c.p.action}});
+  const bots=[0,1,2].map(level=>{const c=new Combat();c.b.x=500;c.p.x=630;c.attack(c.b,'punch');const toward=chooseBotAction(c.b,c.p,level,()=>0);c.p.x=550;const close=chooseBotAction(c.b,c.p,level,()=>0);return{toward,close}});
+  const c=new Combat();c.p.x=1104;c.attack(c.p,'kick');c.update(c.p,c.b,{right:true},.02);
+  return{moves,bots,wall:c.p.x};
+ });for(const m of r.moves){expect(m.dx).toBeCloseTo(2.25);expect(m.walk).toBe(0);expect(['punch','kick']).toContain(m.action)}
+ for(const b of r.bots)expect(b.toward.right).toBe(true);
+ expect(r.bots[0].close).toEqual({});expect(r.bots[1].close.left).toBe(true);expect(r.bots[2].close.left).toBe(true);expect(r.wall).toBe(1105);
+});

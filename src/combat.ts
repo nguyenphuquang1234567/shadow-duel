@@ -27,7 +27,7 @@ export class Combat{
  if(this.p.hp<=0||this.b.hp<=0||this.time===0){this.active=false;this.pendingWinner=this.p.hp===this.b.hp?'draw':this.p.hp>this.b.hp?'player':'bot';this.resultDelay=1;for(const f of [this.p,this.b]){f.superStage='';if(f.hp<=0){f.action='down';f.downAge=0;f.jumps=0;f.vy=0}else{f.action='idle';f.timer=0}}}}
  update(f:Fighter,o:Fighter,i:Input,dt:number){f.face=o.x>f.x?1:-1;f.timer=Math.max(0,f.timer-dt);f.cooldown=Math.max(0,f.cooldown-dt);f.energy=Math.min(100,f.energy+dt*(f.action==='block'?7:19));if(f.timer===0){if(f.superStage)this.advanceSuper(f);else f.action='idle';}if(i.super)this.startSuper(f);if(f.action==='idle'){if(i.block)f.action='block';else if(i.dodge)this.attack(f,'dodge');else if(i.kick)this.attack(f,'kick');else if(i.punch)this.attack(f,'punch');}
  if(i.jump&&!f.jumpHeld&&f.jumps<2&&f.action!=='hurt'&&!f.superStage){f.vy=530;f.y=Math.max(.1,f.y);f.jumps++;f.jumpAge=0}f.jumpHeld=!!i.jump;
- const move=(i.right?1:0)-(i.left?1:0);if(f.action==='idle'){f.x+=move*225*dt;f.walk+=Math.abs(move)*dt*11}else if(f.action==='dodge')f.x-=f.face*340*dt;
+ const move=(i.right?1:0)-(i.left?1:0);if(f.action==='idle'){f.x+=move*225*dt;f.walk+=Math.abs(move)*dt*11}else if((f.action==='punch'||f.action==='kick')&&!f.superStage){f.x+=move*112.5*dt}else if(f.action==='dodge')f.x-=f.face*340*dt;
  if(f.superStage==='punch'&&f.timer>.17)f.x+=f.face*360*dt;
  f.x=Math.max(95,Math.min(1105,f.x));if(f.y>0){f.jumpAge+=dt;f.vy-=1200*dt;f.y=Math.max(0,f.y+f.vy*dt);if(f.y===0){f.vy=0;f.jumps=0}}}
  resolve(f:Fighter,o:Fighter,previousF?:Fighter,previousO?:Fighter,previousTime=this.elapsed,currentF=f,currentO=o){

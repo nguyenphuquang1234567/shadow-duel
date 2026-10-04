@@ -1,10 +1,22 @@
 import type {Fighter,Input} from './combat';
 import {ACTIVE_END} from './geometry';
+/** Keep attack animation while adjusting range; no movement bonus for Super. */
+function attackMovement(bot:Fighter,opponent:Fighter,attack:'punch'|'kick',level:number,random:()=>number):Input{
+ const dx=opponent.x-bot.x,d=Math.abs(dx),target=attack==='punch'?80:110;
+ if(level===0&&random()>.45)return{};
+ if(d>target+10)return{left:dx<0,right:dx>0};
+ if(level>0&&d<target-25){
+  const room=dx>0?bot.x-95:1105-bot.x;
+  if(room>15)return{left:dx>0,right:dx<0};
+ }
+ return{};
+}
 /** Reads visible opponent state only; jump requests are one-frame pulses. */
 function chooseEasyAction(bot:Fighter,opponent:Fighter,level:number,random= Math.random):Input{
  const dx=opponent.x-bot.x,distance=Math.abs(dx),near=distance<145;
  const action:Input={left:dx<0&&!near,right:dx>0&&!near};
  if(bot.action==='hurt')return action;
+ if(bot.action==='punch'||bot.action==='kick')return attackMovement(bot,opponent,bot.action,0,random);
  const attacking=['punch','kick'].includes(opponent.action)&&!opponent.hit&&opponent.timer/opponent.duration>=ACTIVE_END;
  const threatened=attacking&&distance<(opponent.action==='kick'?175:135)&&Math.abs(bot.y-opponent.y)<90;
  const canJump=bot.jumps<2&&!bot.jumpHeld;
@@ -20,6 +32,7 @@ function chooseEasyAction(bot:Fighter,opponent:Fighter,level:number,random= Math
  // Attack in the air only when within reach of the opponent's height.
  if(near&&Math.abs(bot.y-opponent.y)<85&&!action.block&&!action.dodge){
   action.kick=random()<.55;action.punch=!action.kick&&random()<.6;
+  if(action.kick||action.punch)Object.assign(action,attackMovement(bot,opponent,action.kick?'kick':'punch',0,random));
  }
  return action;
 }
@@ -52,7 +65,8 @@ export function chooseBotAction(bot:Fighter,opponent:Fighter,level:number,random
  if(bot.superStage)return{};
  if(level===0)return chooseEasyAction(bot,opponent,0,random);
  if(bot.hp<=0||bot.action==='down'||bot.action==='hurt')return{};
- if(['punch','kick','dodge'].includes(bot.action)||bot.cooldown>0)return{};
+ if(bot.action==='punch'||bot.action==='kick')return attackMovement(bot,opponent,bot.action,level,random);
+ if(bot.action==='dodge'||bot.cooldown>0)return{};
  const hard=level===2,dx=opponent.x-bot.x,d=Math.abs(dx),height=Math.abs(bot.y-opponent.y);
  const toward:Input={left:dx<0,right:dx>0},away:Input={left:dx>0,right:dx<0};
  const room=dx>0?bot.x-95:1105-bot.x;
@@ -89,6 +103,6 @@ export function chooseBotAction(bot:Fighter,opponent:Fighter,level:number,random
  if(!choices.length){if(d>=112&&bot.energy>=12+reserve)return toward;return room>12?away:{}}
  // Less idle time in a punish opportunity, while retaining attack variety.
  const aggression=opening?(hard?.99:.98):(hard?.95:.90);
- if(random()<aggression)return sample(choices,random);
+ if(random()<aggression){const input=sample(choices,random);return{...input,...attackMovement(bot,opponent,input.kick?'kick':'punch',level,random)}}
  return d<70&&room>12?away:{};
 }
