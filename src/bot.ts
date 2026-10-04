@@ -2,7 +2,7 @@ import type {Fighter,Input} from './combat';
 import {ACTIVE_END} from './geometry';
 /** Adjust attack range using the same movement speed as the player. */
 function attackMovement(bot:Fighter,opponent:Fighter,attack:'punch'|'kick',level:number,random:()=>number):Input{
- const dx=opponent.x-bot.x,d=Math.abs(dx),target=attack==='punch'?80:110;
+ const dx=opponent.x-bot.x,d=Math.abs(dx),target=attack==='punch'?(bot.superStage?70:80):(bot.superStage?100:110);
  if(level===0&&random()>.45)return{};
  if(d>target+10)return{left:dx<0,right:dx>0};
  if(level>0&&d<target-25){
@@ -60,7 +60,7 @@ export function chooseBotAction(bot:Fighter,opponent:Fighter,level:number,random
  const superDistance=Math.abs(bot.x-opponent.x),superHeight=Math.abs(bot.y-opponent.y);
  if(bot.hp>0&&bot.superMeter>=100&&superHeight<60){
   const opening=opponent.action==='hurt'||(['punch','kick'].includes(opponent.action)&&(opponent.hit||opponent.timer/opponent.duration<ACTIVE_END));
-  if(superDistance<[145,170,185][level]&&random()<(opening?[.55,.85,.98][level]:[.12,.25,.4][level]))return{super:true,...attackMovement(bot,opponent,'punch',level,random)};
+  if(superDistance<[125,145,155][level]&&random()<(opening?[.55,.85,.98][level]:[.12,.25,.4][level]))return{super:true,...attackMovement({...bot,superStage:'punch'},opponent,'punch',level,random)};
  }
  if(bot.superStage)return attackMovement(bot,opponent,bot.superStage,level,random);
  if(level===0)return chooseEasyAction(bot,opponent,0,random);

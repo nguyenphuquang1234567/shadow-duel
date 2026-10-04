@@ -137,7 +137,7 @@ test('failed AI download blocks starting until a regular mode is selected',async
  await expect(page.locator('[data-level="0"]')).toHaveClass('active');
 });
 
-test('super starts immediately, has a physical two-hit combo and no recovery lock',async({page})=>{
+test('super starts immediately, has a physical four-hit combo and no recovery lock',async({page})=>{
  await page.goto('http://localhost:5173');
  const result=await page.evaluate(async()=>{
   const {Combat}=await import('/src/combat.ts');
@@ -146,13 +146,13 @@ test('super starts immediately, has a physical two-hit combo and no recovery loc
   const empty=setup();empty.step(1/60,{super:true});const gated=empty.p.superStage==='';
   const c=setup();c.p.superMeter=100;c.step(1/60,{super:true});const spent=c.p.superMeter===0&&c.p.superStage==='punch'&&hitboxes(c.p,c.elapsed).length===0;
   let events=0;for(let i=0;i<150;i++){c.step(1/120,{});events+=c.events.splice(0).length}
-  const combo=c.b.hp===75&&events===2&&c.p.superStage===''&&c.p.cooldown===0&&c.p.superMeter===0;
+  const combo=c.b.hp===55&&events===4&&c.p.superStage===''&&c.p.cooldown===0&&c.p.superMeter===0;
   for(let i=0;i<100;i++)c.step(1/120,{});
   c.step(1/120,{punch:true});const recovered=c.p.action==='punch'&&c.p.superStage==='';
   const far=setup();far.b.x=1000;far.p.superMeter=100;for(let i=0;i<200;i++)far.step(1/120,{super:i===0});
   const miss=far.b.hp===100;
   const block=setup();block.p.superMeter=100;block.botController=()=>({block:true});for(let i=0;i<120;i++)block.step(1/120,{super:i===0});
-  const blocked=Math.abs(block.b.hp-96.25)<.001;
+  const blocked=Math.abs(block.b.hp-93.25)<.001;
   c.reset();return{gated,spent,combo,recovered,miss,blocked,reset:c.p.superMeter===0&&c.b.superMeter===0};
  });expect(result).toEqual({gated:true,spent:true,combo:true,recovered:true,miss:true,blocked:true,reset:true});
 });
@@ -170,7 +170,7 @@ test('super charges only from real damage and an incoming strike interrupts the 
   const charged=c.p.superMeter===18&&c.b.superMeter===0;
   const miss=new Combat(Math.random,100);miss.reset();miss.botController=()=>({});for(let i=0;i<45;i++)miss.step(1/120,{punch:i===0});
   const noFreeMeter=miss.p.superMeter===0&&miss.b.superMeter===0;
-  const interrupted=new Combat(Math.random,100);interrupted.reset();interrupted.p.x=450;interrupted.b.x=530;interrupted.p.superMeter=100;interrupted.botController=()=>({punch:true});
+  const interrupted=new Combat(Math.random,100);interrupted.reset();interrupted.p.x=450;interrupted.b.x=530;interrupted.p.superMeter=100;interrupted.botController=()=>({});interrupted.b.action='punch';interrupted.b.duration=.34;interrupted.b.timer=.16;
   for(let i=0;i<20;i++)interrupted.step(1/120,{super:i===0});
   return{charged,noFreeMeter,canceled:interrupted.p.hp<100&&interrupted.p.superStage===''&&interrupted.b.hp>=90};
  });expect(r).toEqual({charged:true,noFreeMeter:true,canceled:true});
@@ -238,14 +238,30 @@ test('Super permits steering in both stages while preserving rush, animation and
  const r=await page.evaluate(async()=>{
   const {Combat}=await import('/src/combat.ts');const {chooseBotAction}=await import('/src/bot.ts');
   const cases=[];
-  for(const [stage,timer] of [['punch',.34],['punch',.15],['kick',.4]])for(const move of [-1,0,1]){
-   const c=new Combat();c.p.superMeter=100;c.startSuper(c.p);c.p.superStage=stage;c.p.action=stage;c.p.timer=timer;c.p.duration=stage==='kick'?.55:.34;
+  for(const [stage,timer] of [['punch',.15],['punch',.03],['kick',.25]])for(const move of [-1,0,1]){
+   const c=new Combat();c.p.superMeter=100;c.startSuper(c.p);c.p.superStage=stage;c.p.action=stage;c.p.timer=timer;c.p.duration=stage==='kick'?.32:.15;
    const x=c.p.x;c.update(c.p,c.b,{left:move<0,right:move>0},.02);cases.push({stage,timer,move,dx:c.p.x-x,walk:c.p.walk,action:c.p.action});
   }
   const bots=[0,1,2].map(level=>{const c=new Combat();c.b.x=500;c.p.x=640;c.b.superMeter=100;c.startSuper(c.b);return chooseBotAction(c.b,c.p,level,()=>0)});
   const wall=new Combat();wall.p.x=1104;wall.p.superMeter=100;wall.startSuper(wall.p);wall.p.superStage='kick';wall.p.action='kick';wall.p.timer=.4;wall.update(wall.p,wall.b,{right:true},.02);
   return{cases,bots,wall:wall.p.x};
  });
- for(const c of r.cases){expect(c.dx).toBeCloseTo(c.move*2.25+(c.stage==='punch'&&c.timer>.17?7.2:0));expect(c.walk).toBe(0);expect(c.action).toBe(c.stage)}
+ for(const c of r.cases){expect(c.dx).toBeCloseTo(c.move*2.25+(c.stage==='punch'&&c.timer>.05?7.2:0));expect(c.walk).toBe(0);expect(c.action).toBe(c.stage)}
  for(const b of r.bots)expect(b.right).toBe(true);expect(r.wall).toBe(1105);
+});
+
+test('four-hit Super lasts 0.8 seconds at multiple frame rates without extra recovery',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const r=await page.evaluate(async()=>{
+  const {Combat,SUPER_DURATIONS}=await import('/src/combat.ts');
+  return [30,60,120].map(fps=>{const c=new Combat();c.p.superMeter=100;c.startSuper(c.p);let elapsed=0;const order=['punch1'];let last='punch1';while(c.p.superStage&&elapsed<1){c.update(c.p,c.b,{},1/fps);elapsed+=1/fps;const stage=c.p.superStage?c.p.superStage+(c.p.superStage==='punch'?c.p.superPunch:''):'';if(stage&&stage!==last){order.push(stage);last=stage}}return{elapsed,order,cooldown:c.p.cooldown,durations:SUPER_DURATIONS}});
+ });for(const r0 of r){expect(r0.order).toEqual(['punch1','punch2','punch3','kick']);expect(r0.elapsed).toBeGreaterThanOrEqual(.8-1e-9);expect(r0.elapsed).toBeLessThanOrEqual(.8+1/30+1e-9);expect(r0.cooldown).toBe(0);expect(r0.durations.reduce((a,b)=>a+b,0)).toBeCloseTo(.8)}
+});
+
+test('scripted bots start the shorter Super only in reach and holding Super does not extend rush',async({page})=>{
+ await page.goto('http://localhost:5173');const r=await page.evaluate(async()=>{
+ const {Combat}=await import('/src/combat.ts');const {chooseBotAction}=await import('/src/bot.ts');
+ const ranges=[0,1,2].map(level=>{const c=new Combat();c.b.x=500;c.b.superMeter=100;c.p.action='hurt';c.p.x=500+[125,145,155][level]-1;const near=chooseBotAction(c.b,c.p,level,()=>0).super===true;c.p.x+=2;return{near,far:chooseBotAction(c.b,c.p,level,()=>0).super===true}});
+ const rush=[false,true].map(held=>{const c=new Combat();c.p.superMeter=100;c.startSuper(c.p);for(let i=0;i<17;i++)c.update(c.p,c.b,{super:held},.01);return c.p.x-350});return{ranges,rush};
+ });for(const r0 of r.ranges){expect(r0.near).toBe(true);expect(r0.far).toBe(false)}expect(r.rush[0]).toBeCloseTo(36);expect(r.rush[1]).toBeCloseTo(36);
 });
