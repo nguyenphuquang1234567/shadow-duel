@@ -8,10 +8,10 @@ export class Combat{
  botController?: (self:Fighter,opponent:Fighter,combat:Combat)=>Input;
  superEnabled=true;
  botMemory=new BotMemory();
- p=this.make(350,1);b=this.make(850,-1);time=90;elapsed=0;active=false;paused=false;level=1;think=0;bot:Input={};winner='';pendingWinner='';resultDelay=0; events:{x:number;y:number;blocked:boolean;kind:'punch'|'kick'}[]=[];sounds:'dodge'[]=[];
+ p=this.make(350,1);b=this.make(850,-1);time=90;elapsed=0;active=false;paused=false;level=1;think=0;bot:Input={};winner='';pendingWinner='';resultDelay=0; events:{x:number;y:number;blocked:boolean;kind:'punch'|'kick'}[]=[];sounds:('dodge'|'super')[]=[];
  make(x:number,face:number):Fighter{return{x,y:0,vy:0,jumps:0,jumpAge:0,downAge:0,jumpHeld:false,hp:100,energy:100,face,action:'idle',timer:0,duration:0,hit:false,cooldown:0,walk:0,superMeter:0,superStage:''}}
  reset(){this.botMemory.reset();this.p=this.make(350,1);this.b=this.make(850,-1);this.time=90;this.elapsed=0;this.winner='';this.pendingWinner='';this.resultDelay=0;this.active=true;this.paused=false;this.bot={};this.think=0;this.events=[];this.sounds=[]}
- startSuper(f:Fighter){if(!this.superEnabled||f.superMeter<100||f.hp<=0)return;f.superMeter=0;f.superStage='punch';f.action='punch';f.timer=f.duration=.34;f.cooldown=.89;f.hit=false}
+ startSuper(f:Fighter){if(!this.superEnabled||f.superMeter<100||f.hp<=0)return;this.sounds.push('super');f.superMeter=0;f.superStage='punch';f.action='punch';f.timer=f.duration=.34;f.cooldown=.89;f.hit=false}
  advanceSuper(f:Fighter){
   const stage=f.superStage;
   if(stage==='punch'){f.superStage='kick';f.action='kick';f.timer=f.duration=.55}

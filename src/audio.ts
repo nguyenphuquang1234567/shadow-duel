@@ -2,6 +2,7 @@
 export const audioManifest = {
   punch: '/audio/punch-hit.wav', kick: '/audio/kick-hit.wav',
   block: '/audio/block.wav', dodge: '/audio/dodge.wav',
+  super: '/audio/super-activate.wav',
 } as const;
 export const musicAsset = '/audio/background-music.mp3';
 export type SoundKey = keyof typeof audioManifest;
@@ -51,7 +52,7 @@ export class CombatAudio {
     if (this.context.state === 'suspended') void this.context.resume();
     const source = this.context.createBufferSource();
     const gain = this.context.createGain();
-    source.buffer = buffer; gain.gain.value = key === 'dodge' ? .8 : 1.4;
+    source.buffer = buffer; gain.gain.value = key === 'dodge' ? .8 : key === 'super' ? 1 : 1.4;
     source.connect(gain); gain.connect(this.master!); source.start();
   }
 }
