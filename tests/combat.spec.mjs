@@ -232,3 +232,20 @@ test('attacks move at half speed without walking animation; bots adjust attack r
  for(const b of r.bots)expect(b.toward.right).toBe(true);
  expect(r.bots[0].close).toEqual({});expect(r.bots[1].close.left).toBe(true);expect(r.bots[2].close.left).toBe(true);expect(r.wall).toBe(1105);
 });
+
+test('Super permits steering in both stages while preserving rush, animation and walls',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const r=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');const {chooseBotAction}=await import('/src/bot.ts');
+  const cases=[];
+  for(const [stage,timer] of [['punch',.34],['punch',.15],['kick',.4]])for(const move of [-1,0,1]){
+   const c=new Combat();c.p.superMeter=100;c.startSuper(c.p);c.p.superStage=stage;c.p.action=stage;c.p.timer=timer;c.p.duration=stage==='kick'?.55:.34;
+   const x=c.p.x;c.update(c.p,c.b,{left:move<0,right:move>0},.02);cases.push({stage,timer,move,dx:c.p.x-x,walk:c.p.walk,action:c.p.action});
+  }
+  const bots=[0,1,2].map(level=>{const c=new Combat();c.b.x=500;c.p.x=640;c.b.superMeter=100;c.startSuper(c.b);return chooseBotAction(c.b,c.p,level,()=>0)});
+  const wall=new Combat();wall.p.x=1104;wall.p.superMeter=100;wall.startSuper(wall.p);wall.p.superStage='kick';wall.p.action='kick';wall.p.timer=.4;wall.update(wall.p,wall.b,{right:true},.02);
+  return{cases,bots,wall:wall.p.x};
+ });
+ for(const c of r.cases){expect(c.dx).toBeCloseTo(c.move*2.25+(c.stage==='punch'&&c.timer>.17?7.2:0));expect(c.walk).toBe(0);expect(c.action).toBe(c.stage)}
+ for(const b of r.bots)expect(b.right).toBe(true);expect(r.wall).toBe(1105);
+});
