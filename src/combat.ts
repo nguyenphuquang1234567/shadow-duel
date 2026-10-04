@@ -1,7 +1,7 @@
 import {chooseBotAction,BotMemory,botDecisionIntervals} from './bot';
 import {hitboxes,hurtboxes,overlaps,weaponBoxes,lerpCapsule,sweptContact,ACTIVE_START,ACTIVE_END,type Capsule} from './geometry';
-export type Action='idle'|'punch'|'kick'|'block'|'dodge'|'hurt'|'down'|'super';
-export interface Fighter{x:number;y:number;vy:number;jumps:number;jumpAge:number;downAge:number;jumpHeld:boolean;hp:number;energy:number;face:number;action:Action;timer:number;duration:number;hit:boolean;cooldown:number;walk:number;superMeter:number;superStage:''|'windup'|'punch'|'kick'|'recovery'}
+export type Action='idle'|'punch'|'kick'|'block'|'dodge'|'hurt'|'down';
+export interface Fighter{x:number;y:number;vy:number;jumps:number;jumpAge:number;downAge:number;jumpHeld:boolean;hp:number;energy:number;face:number;action:Action;timer:number;duration:number;hit:boolean;cooldown:number;walk:number;superMeter:number;superStage:''|'punch'|'kick'}
 export interface Input{left?:boolean;right?:boolean;jump?:boolean;punch?:boolean;kick?:boolean;block?:boolean;dodge?:boolean;super?:boolean}
 export class Combat{
  constructor(public random:()=>number=Math.random){}
@@ -11,13 +11,11 @@ export class Combat{
  p=this.make(350,1);b=this.make(850,-1);time=90;elapsed=0;active=false;paused=false;level=1;think=0;bot:Input={};winner='';pendingWinner='';resultDelay=0; events:{x:number;y:number;blocked:boolean;kind:'punch'|'kick'}[]=[];sounds:'dodge'[]=[];
  make(x:number,face:number):Fighter{return{x,y:0,vy:0,jumps:0,jumpAge:0,downAge:0,jumpHeld:false,hp:100,energy:100,face,action:'idle',timer:0,duration:0,hit:false,cooldown:0,walk:0,superMeter:0,superStage:''}}
  reset(){this.botMemory.reset();this.p=this.make(350,1);this.b=this.make(850,-1);this.time=90;this.elapsed=0;this.winner='';this.pendingWinner='';this.resultDelay=0;this.active=true;this.paused=false;this.bot={};this.think=0;this.events=[];this.sounds=[]}
- startSuper(f:Fighter){if(!this.superEnabled||f.superMeter<100||f.action!=='idle'||f.cooldown>0||f.y>0)return;f.superMeter=0;f.superStage='windup';f.action='super';f.timer=f.duration=.3;f.cooldown=1.91;f.hit=false}
+ startSuper(f:Fighter){if(!this.superEnabled||f.superMeter<100||f.action!=='idle'||f.cooldown>0||f.y>0)return;f.superMeter=0;f.superStage='punch';f.action='punch';f.timer=f.duration=.34;f.cooldown=.89;f.hit=false}
  advanceSuper(f:Fighter){
   const stage=f.superStage;
-  if(stage==='windup'){f.superStage='punch';f.action='punch';f.timer=f.duration=.34}
-  else if(stage==='punch'){f.superStage='kick';f.action='kick';f.timer=f.duration=.55}
-  else if(stage==='kick'){f.superStage='recovery';f.action='super';f.timer=f.duration=.6}
-  else{f.superStage='';f.action='idle'}
+  if(stage==='punch'){f.superStage='kick';f.action='kick';f.timer=f.duration=.55}
+  else{f.superStage='';f.action='idle';f.cooldown=0}
   f.hit=false;
  }
  attack(f:Fighter,a:Action){const cost=a==='kick'?23:a==='punch'?12:18;if(f.energy<cost||f.cooldown>0||f.action==='hurt'||f.timer>0)return;f.energy-=cost;if(a==='dodge')this.sounds.push('dodge');f.action=a;f.duration=a==='kick'?.55:a==='punch'?.34:.35;f.timer=f.duration;f.hit=false;f.cooldown=f.duration+.12}
