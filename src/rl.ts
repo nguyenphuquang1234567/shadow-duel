@@ -5,7 +5,7 @@ export const actionNames=['idle','toward','away','punch','kick','block','dodge',
 const clip=(x:number)=>Math.max(-1,Math.min(1,x));
 export function observation(self:Fighter,other:Fighter,combat:Combat):number[]{
  const vector=(f:Fighter)=>[
-  (f.x-600)/600,f.y/600,f.vy/600,f.face,f.hp/100,f.energy/100,f.jumps/2,+f.jumpHeld,
+  (f.x-600)/600,f.y/600,f.vy/600,f.face,f.hp/combat.maxHp,f.energy/100,f.jumps/2,+f.jumpHeld,
   f.timer,f.duration,f.cooldown,+f.hit,f.jumpAge/2,f.downAge/2,Math.sin(f.walk),Math.cos(f.walk),
   ...actions.map(a=>+(f.action===a)),
  ];
