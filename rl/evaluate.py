@@ -16,7 +16,7 @@ results = []
 for level in range(3):
     env = DuelEnv(level)
     counts = {'win':0,'loss':0,'draw':0}
-    rewards = []
+    rewards = []; super_uses = []
     try:
         for episode in range(args.episodes):
             obs, _ = env.reset(seed=args.seed+episode)
@@ -29,8 +29,9 @@ for level in range(3):
                 if terminated or truncated:
                     counts[info['outcome']] += 1
                     rewards.append(total)
+                    super_uses.append(info.get('super_uses',0))
                     break
-        results.append({'level':level,**counts,'win_rate':counts['win']/args.episodes,'mean_reward':sum(rewards)/len(rewards)})
+        results.append({'level':level,**counts,'win_rate':counts['win']/args.episodes,'mean_reward':sum(rewards)/len(rewards),'super_uses':sum(super_uses),'episodes_using_super':sum(n>0 for n in super_uses)})
     finally:
         env.close()
 print(json.dumps(results, indent=2))

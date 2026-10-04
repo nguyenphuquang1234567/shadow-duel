@@ -184,3 +184,12 @@ test('full super cancels any live action on ground or in air without charging fr
   }));
  });expect(r).toEqual(Array(12).fill(true));
 });
+test('PPO schema 2 observes super meters and enables super in the AI mode',async({page})=>{
+ const names=['idle','toward','away','punch','kick','block','dodge','jump','toward-jump','away-jump','toward-punch','toward-kick','super'];
+ const policy={version:2,observationSize:59,actionNames:names,layers:[{weight:Array.from({length:13},()=>Array(59).fill(0)),bias:[...Array(12).fill(0),1],activation:'linear'}]};
+ await page.route('**/models/ppo-best.json',r=>r.fulfill({json:policy}));
+ await page.goto('http://localhost:5173/');await page.locator('#rl-mode').click();await expect(page.locator('#rl-status')).toContainText('Sẵn sàng');
+ await expect(page.locator('#p-super').locator('..')).toBeVisible();
+ const values=await page.evaluate(async(policy)=>{const {Combat}=await import('/src/combat.ts');const {observation,policyAction,actionInput}=await import('/src/rl.ts');const c=new Combat();c.p.superMeter=100;c.b.superMeter=50;const obs=observation(c.p,c.b,c);return{length:obs.length,self:obs[53],other:obs[56],super:actionInput(policyAction(policy,obs),c.p,c.b).super}},policy);
+ expect(values).toEqual({length:59,self:1,other:.5,super:true});
+});

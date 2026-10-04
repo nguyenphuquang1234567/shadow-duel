@@ -17,7 +17,11 @@ def export(model, destination):
             raise ValueError(f'Unsupported actor layer {module}')
     module = model.policy.action_net
     layers.append({'weight':module.weight.detach().cpu().tolist(), 'bias':module.bias.detach().cpu().tolist(), 'activation':'linear'})
-    data = {'version':1,'observationSize':53,'actionNames':ACTIONS,'layers':layers}
+    size = model.observation_space.shape[0]
+    legacy = size == 53 and model.action_space.n == 12
+    if not legacy and (size != 59 or model.action_space.n != 13):
+        raise ValueError('Unsupported combat model schema')
+    data = {'version':1 if legacy else 2,'observationSize':size,'actionNames':ACTIONS[:-1] if legacy else ACTIONS,'layers':layers}
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(data))

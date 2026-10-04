@@ -5,13 +5,13 @@ from pathlib import Path
 import gymnasium as gym
 import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
-ACTIONS = ['idle','toward','away','punch','kick','block','dodge','jump','toward-jump','away-jump','toward-punch','toward-kick']
+ACTIONS = ['idle','toward','away','punch','kick','block','dodge','jump','toward-jump','away-jump','toward-punch','toward-kick','super']
 class DuelEnv(gym.Env):
     metadata = {'render_modes': []}
     def __init__(self, level=None):
         super().__init__()
         self.level = level
-        self.observation_space = gym.spaces.Box(-1, 1, (53,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(-1, 1, (59,), dtype=np.float32)
         self.action_space = gym.spaces.Discrete(len(ACTIONS))
         bridge = ROOT / 'rl/dist/server.mjs'
         if not bridge.exists():
@@ -26,7 +26,7 @@ class DuelEnv(gym.Env):
         result = json.loads(line)
         if 'error' in result:
             raise RuntimeError(result['error'])
-        if result['version'] != 1 or result['actions'] != ACTIONS or result['observationSize'] != 53:
+        if result['version'] != 2 or result['actions'] != ACTIONS or result['observationSize'] != 59:
             raise RuntimeError('Combat schema mismatch')
         return result
     def reset(self, *, seed=None, options=None):

@@ -1,4 +1,4 @@
-import {observation,actionInput,policyAction,type PolicyData} from './rl';
+import {policyObservation,actionInput,policyAction,type PolicyData} from './rl';
 import {pose,hitboxes,hurtboxes,type Capsule} from './geometry';
 import {CombatAudio} from './audio';
 import Phaser from 'phaser';import './style.css';import {Combat,type Fighter,type Input} from './combat';
@@ -19,9 +19,10 @@ async function selectRL(){
  $('rl-mode').classList.add('active');$('rl-mode').setAttribute('aria-pressed','true');
  $('rl-status').textContent='Đang tải bot AI…';($('start') as HTMLButtonElement).disabled=true;
  try{
-  policyPromise??=fetch('/models/ppo-best.json').then(r=>{if(!r.ok)throw new Error('Missing RL model');return r.json()}).then((policy:PolicyData)=>{policyAction(policy,observation(sim.b,sim.p,sim));return policy});
+  policyPromise??=fetch('/models/ppo-best.json').then(r=>{if(!r.ok)throw new Error('Missing RL model');return r.json()}).then((policy:PolicyData)=>{policyAction(policy,policyObservation(policy,sim.b,sim.p,sim));return policy});
   const policy=await policyPromise;if(ticket!==selection||mode!=='rl')return;
-  sim.botController=(self,other,combat)=>actionInput(policyAction(policy,observation(self,other,combat)),self,other);
+  sim.superEnabled=policy.version>=2;
+  sim.botController=(self,other,combat)=>actionInput(policyAction(policy,policyObservation(policy,self,other,combat)),self,other);
   sim.think=0;sim.bot={};document.title='Shadow Duel — Đấu với bóng tối · PPO bot';
   $('rl-status').textContent='Sẵn sàng · Model tốt nhất sau 1 triệu bước luyện tập.';
   ($('start') as HTMLButtonElement).disabled=false;

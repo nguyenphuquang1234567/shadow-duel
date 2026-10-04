@@ -1,4 +1,5 @@
 """Integration checks for determinism, checkpoints and browser actor parity."""
+import argparse
 import json
 import subprocess
 import numpy as np
@@ -6,6 +7,7 @@ from stable_baselines3 import PPO
 from env import DuelEnv, ROOT
 from export import export
 
+parser=argparse.ArgumentParser();parser.add_argument('--model',default='rl/runs/super-smoke/last.zip');args=parser.parse_args()
 a,b = DuelEnv(),DuelEnv()
 try:
     oa,_ = a.reset(seed=123)
@@ -19,8 +21,8 @@ try:
         samples.append(ra[0].tolist())
         if ra[2] or ra[3]:
             a.reset(seed=123); b.reset(seed=123)
-    model = PPO.load(ROOT/'rl/runs/smoke/last.zip', device='cpu')
-    destination = export(model, ROOT/'rl/runs/smoke/policy.json')
+    model = PPO.load(ROOT/args.model, device='cpu')
+    destination = export(model, ROOT/'rl/runs/super-smoke/verified-policy.json')
     expected = [int(model.predict(np.asarray(obs,np.float32),deterministic=True)[0]) for obs in samples]
     script = "import fs from 'node:fs';import {policyAction} from './rl/dist/policy.mjs';const d=JSON.parse(fs.readFileSync(process.argv[1]));const s=JSON.parse(fs.readFileSync(0,'utf8'));console.log(JSON.stringify(s.map(o=>policyAction(d,o))));"
     actual = json.loads(subprocess.check_output(['node','--input-type=module','-e',script,str(destination)],input=json.dumps(samples),text=True,cwd=ROOT))

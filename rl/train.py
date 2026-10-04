@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--steps', type=int, default=100_000)
     parser.add_argument('--envs', type=int, default=4)
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--run', default='rl/runs/ppo')
+    parser.add_argument('--run', default='rl/runs/ppo-super')
     parser.add_argument('--resume')
     parser.add_argument('--eval-every', type=int, default=10_000)
     parser.add_argument('--checkpoint-every', type=int, default=5_000)
@@ -53,7 +53,7 @@ def main():
             interrupted = True
         model.save(run/'last')
         export(model, run/'policy.json')
-        (run/'summary.json').write_text(json.dumps({'timesteps':model.num_timesteps,'seed':args.seed,'seconds':time.monotonic()-start,'interrupted':interrupted,'schema':1,'opponents':[0,1,2]}, indent=2))
+        (run/'summary.json').write_text(json.dumps({'timesteps':model.num_timesteps,'seed':args.seed,'seconds':time.monotonic()-start,'interrupted':interrupted,'schema':2,'opponents':[0,1,2]}, indent=2))
     finally:
         env.close()
         evaluation.close()

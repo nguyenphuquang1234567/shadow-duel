@@ -14,7 +14,7 @@ uv pip install --python .venv-rl/bin/python -r rl/requirements.txt
 .venv-rl/bin/python rl/train.py --steps 100000 --run rl/runs/ppo
 ```
 
-Default: four environments, one CPU PyTorch thread, randomized starting side/distance, equal sampling of easy/medium/hard scripted opponents. Observations contain 53 normalized numbers: both fighters' position, velocity, health, stamina, action/timers, jump state, relative distance, time and available room. The policy chooses among 12 actions every 0.1 simulated seconds, including movement combined with jump or attack. Jump presses release between decisions, allowing double jumps.
+Default: four environments, one CPU PyTorch thread, randomized starting side/distance, equal sampling of easy/medium/hard scripted opponents. Observations contain 59 normalized numbers: both fighters' position, velocity, health, stamina, action/timers, jump state, relative distance, time, available room, and both Super meters/combo stages. The policy chooses among 13 actions every 0.1 simulated seconds, including movement combined with jump or attack, and Super. Jump presses release between decisions, allowing double jumps.
 
 Reward: damage dealt minus damage received, divided by 100; terminal win +2, loss -2, draw 0. KO ends the episode; the 90-second limit truncates it, with outcome decided by remaining HP. There is no bonus for useless jumping, stamina spending or standing nearby. Rewards are a starting design to measure and tune, not a guarantee of a good fighting style.
 
@@ -52,9 +52,9 @@ Reload after exporting; update the metadata for the replacement. The browser use
 ## Verification and current result
 
 ```sh
-.venv-rl/bin/python rl/train.py --steps 2048 --run rl/runs/smoke --checkpoint-every 1024 --eval-every 2048
+.venv-rl/bin/python rl/train.py --steps 2048 --run rl/runs/super-smoke --checkpoint-every 1024 --eval-every 2048
 .venv-rl/bin/python rl/verify.py
-.venv-rl/bin/python rl/evaluate.py rl/runs/smoke/last.zip --episodes 3
+.venv-rl/bin/python rl/evaluate.py rl/runs/super-smoke/last.zip --episodes 3
 npm run build
 npx playwright test
 ```
@@ -68,3 +68,20 @@ Training currently measures improvement against scripted opponents. Self-play, o
 - [Stable-Baselines3 custom environments](https://stable-baselines3.readthedocs.io/en/master/guide/custom_env.html)
 - [Stable-Baselines3 PPO](https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html)
 - Workflow guidance: Kassis et al. (2026), *Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents*, [doi:10.48550/arXiv.2609.00065](https://doi.org/10.48550/arXiv.2609.00065), via the [Stable-Baselines3 skill](https://github.com/K-Dense-AI/scientific-agent-skills/blob/main/skills/stable-baselines3/SKILL.md).
+
+## Super training (schema 2)
+
+This branch trains a fresh 59-input / 13-action actor with the new Super rules. Super can cancel any current action while the fighter is alive, including airborne actions. Charge comes only from actual damage dealt, not damage received; Super cannot recharge itself. Rewards remain damage difference plus the outcome bonus, with no artificial bonus for pressing Super. Scripted opponents may also use Super.
+
+Schema-1 checkpoints (53 inputs / 12 actions) cannot resume into this environment. They remain usable by the browser with Super disabled. Schema-2 policies enable Super for both sides. Keep the original checkpoint archives for comparison.
+
+```sh
+node rl/build.mjs
+.venv-rl/bin/python rl/train.py --steps 1000000 --run rl/runs/ppo-super-million
+.venv-rl/bin/python rl/evaluate.py rl/runs/ppo-super-million/best/best_model.zip --episodes 30 --seed 300000
+.venv-rl/bin/python rl/verify.py --model rl/runs/ppo-super-million/best/best_model.zip
+```
+
+The best Super actor is exported separately as `public/models/ppo-super-best.json`; it does not replace the current default actor until selected for integration. Evaluation reports Super activations and episodes using Super in addition to wins.
+
+Completed Super run: 1,000,448 transitions, seed 42, four environments, 129.74 seconds. The best actor won all 90 held-out matches (30 per difficulty, deterministic actions, seeds 300000–300029), using Super once per match. This single training seed and scripted-opponent benchmark do not establish strength against people or different opponents. Export parity matched 73 Python/JavaScript decisions. Training checkpoints remain local in `rl/runs/ppo-super-million`; the separate actor and metadata are committed for review. The bundled default `ppo-best.json` is still the previous model. The Scientific Agent Skills reference above documents the skill used for this run.
