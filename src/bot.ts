@@ -44,6 +44,12 @@ function sample(choices:Choice[],random:()=>number):Input{
 }
 /** Normal/Hard use weighted random legal choices, never a single best score. */
 export function chooseBotAction(bot:Fighter,opponent:Fighter,level:number,random=Math.random,memory?:BotMemory):Input{
+ const superDistance=Math.abs(bot.x-opponent.x),superHeight=Math.abs(bot.y-opponent.y);
+ if(bot.action==='idle'&&bot.cooldown<=0&&bot.y===0&&bot.superMeter>=100&&superHeight<60){
+  const opening=opponent.action==='hurt'||(opponent.cooldown>.22&&!['punch','kick'].includes(opponent.action));
+  if(superDistance<[145,170,185][level]&&random()<(opening?[.55,.85,.98][level]:[.12,.25,.4][level]))return{super:true};
+ }
+ if(bot.superStage)return{};
  if(level===0)return chooseEasyAction(bot,opponent,0,random);
  if(bot.hp<=0||bot.action==='down'||bot.action==='hurt')return{};
  if(['punch','kick','dodge'].includes(bot.action)||bot.cooldown>0)return{};

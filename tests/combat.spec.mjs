@@ -135,3 +135,42 @@ test('failed AI download blocks starting until a regular mode is selected',async
  await expect(page.locator('#start')).toBeEnabled();
  await expect(page.locator('[data-level="0"]')).toHaveClass('active');
 });
+
+test('super requires charge, has a windup, physical two-hit combo and recovery',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const result=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');
+  const {hitboxes}=await import('/src/geometry.ts');
+  const setup=()=>{const c=new Combat();c.reset();c.botController=()=>({});c.p.x=450;c.b.x=530;return c};
+  const empty=setup();empty.step(1/60,{super:true});const gated=empty.p.superStage==='';
+  const c=setup();c.p.superMeter=100;c.step(1/60,{super:true});const spent=c.p.superMeter===0&&c.p.superStage==='windup'&&hitboxes(c.p,c.elapsed).length===0;
+  let events=0;for(let i=0;i<150;i++){c.step(1/120,{});events+=c.events.splice(0).length}
+  const combo=c.b.hp===75&&events===2&&c.p.superStage==='recovery'&&c.p.superMeter===0;
+  for(let i=0;i<100;i++)c.step(1/120,{});
+  const recovered=c.p.superStage==='';
+  const far=setup();far.b.x=1000;far.p.superMeter=100;for(let i=0;i<200;i++)far.step(1/120,{super:i===0});
+  const miss=far.b.hp===100;
+  const block=setup();block.p.superMeter=100;block.botController=()=>({block:true});for(let i=0;i<120;i++)block.step(1/120,{super:i===0});
+  const blocked=Math.abs(block.b.hp-96.25)<.001;
+  c.reset();return{gated,spent,combo,recovered,miss,blocked,reset:c.p.superMeter===0&&c.b.superMeter===0};
+ });expect(result).toEqual({gated:true,spent:true,combo:true,recovered:true,miss:true,blocked:true,reset:true});
+});
+test('all three scripted difficulties can use super with a real opening',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const result=await page.evaluate(async()=>{const {Combat}=await import('/src/combat.ts');const {chooseBotAction}=await import('/src/bot.ts');return [0,1,2].map(level=>{const c=new Combat();c.b.x=500;c.p.x=590;c.b.superMeter=100;c.p.action='hurt';c.p.cooldown=.4;return chooseBotAction(c.b,c.p,level,()=>0).super===true})});
+ expect(result).toEqual([true,true,true]);
+});
+test('super charges only from real damage and an incoming strike cancels windup',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const r=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');
+  const c=new Combat();c.reset();c.botController=()=>({});c.p.x=450;c.b.x=530;
+  for(let i=0;i<25;i++)c.step(1/120,{punch:i===0});
+  const charged=c.p.superMeter===18&&c.b.superMeter===27;
+  const miss=new Combat();miss.reset();miss.botController=()=>({});for(let i=0;i<45;i++)miss.step(1/120,{punch:i===0});
+  const noFreeMeter=miss.p.superMeter===0&&miss.b.superMeter===0;
+  const interrupted=new Combat();interrupted.reset();interrupted.p.x=450;interrupted.b.x=530;interrupted.p.superMeter=100;interrupted.botController=()=>({punch:true});
+  for(let i=0;i<20;i++)interrupted.step(1/120,{super:i===0});
+  return{charged,noFreeMeter,canceled:interrupted.p.hp<100&&interrupted.p.superStage===''&&interrupted.b.hp===100};
+ });expect(r).toEqual({charged:true,noFreeMeter:true,canceled:true});
+});

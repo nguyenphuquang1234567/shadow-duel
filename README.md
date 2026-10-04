@@ -32,3 +32,11 @@ Run `node scripts/benchmark-bots.mjs` with the local Vite server running to comp
 ## Experimental reinforcement learning
 
 The separate PPO pipeline, checkpoint/resume commands, evaluation and opt-in browser model are documented in [rl/README.md](rl/README.md). The default game continues to use the scripted bot.
+
+## Super: Ảnh Kích
+
+In Dễ/Vừa/Khó, both fighters have a Super meter. Real damage dealt charges it at 2 points per HP; damage received at 3 points per HP (blocked damage uses the reduced amount). Missed attacks grant nothing. At 100, press **I** or the mobile **ẢNH KÍCH** button while grounded and free to act.
+
+The move spends the full meter, winds up for 0.3 seconds, rushes forward with a 10-damage punch, then delivers a 15-damage kick and recovers for 0.6 seconds. Both strikes use the existing swept limb hitboxes and can miss or be blocked; getting hit interrupts the move. It grants no invulnerability. Super damage does not recharge the attacker's meter. Normal bot difficulties use it with different probabilities, favouring recovery openings at higher levels.
+
+The existing PPO mode keeps Super disabled for both sides because its exported policy was trained before this mechanic existed. Retraining is needed before adding Super to that mode.
