@@ -18,7 +18,7 @@ export class Combat{
   else{f.superStage='';f.action='idle';f.cooldown=0}
   f.hit=false;
  }
- attack(f:Fighter,a:Action){const cost=a==='kick'?23:a==='punch'?12:18;if(f.energy<cost||f.cooldown>0||f.action==='hurt'||f.timer>0)return;f.energy-=cost;if(a==='dodge')this.sounds.push('dodge');f.action=a;f.duration=a==='kick'?.55:a==='punch'?.34:.35;f.timer=f.duration;f.hit=false;f.cooldown=f.duration+.12}
+ attack(f:Fighter,a:Action){const cost=a==='kick'?23:a==='punch'?12:18;if(f.energy<cost||f.cooldown>0||f.action==='hurt'||f.timer>0)return;f.energy-=cost;if(a==='dodge')this.sounds.push('dodge');f.action=a;f.duration=a==='kick'?.55:a==='punch'?.34:.35;f.timer=f.duration;f.hit=false;f.cooldown=f.duration+(a==='dodge'?.12:0)}
  step(dt:number,input:Input){if(this.paused)return;dt=Math.min(dt,.035);if(this.pendingWinner){this.elapsed+=dt;for(const f of [this.p,this.b])if(f.action==='down'){f.downAge+=dt;f.y=Math.max(0,f.y-500*dt)}this.resultDelay=Math.max(0,this.resultDelay-dt);if(this.resultDelay===0){this.winner=this.pendingWinner;this.pendingWinner=''}return}if(!this.active)return;const previousP={...this.p},previousB={...this.b},previousTime=this.elapsed;this.time=Math.max(0,this.time-dt);this.elapsed+=dt;this.think-=dt;this.botMemory.observe(this.p,dt);
  if(this.think<=0){this.think=this.botController ? .1 : botDecisionIntervals[this.level];this.bot=this.botController?this.botController(this.b,this.p,this):chooseBotAction(this.b,this.p,this.level,this.random,this.botMemory);}
  this.update(this.p,this.b,input,dt);this.update(this.b,this.p,this.bot,dt);this.bot.jump=false;if(Math.abs(this.p.x-this.b.x)<58&&Math.abs(this.p.y-this.b.y)<70){const middle=(this.p.x+this.b.x)/2;this.p.x=middle-29*this.p.face;this.b.x=middle+29*this.p.face;}

@@ -194,3 +194,20 @@ test('PPO schema 2 observes super meters and enables super in the AI mode',async
  const values=await page.evaluate(async(policy)=>{const {Combat}=await import('/src/combat.ts');const {observation,policyAction,actionInput}=await import('/src/rl.ts');const c=new Combat();c.p.superMeter=100;c.b.superMeter=50;const obs=observation(c.p,c.b,c);return{length:obs.length,self:obs[53],other:obs[56],super:actionInput(policyAction(policy,obs),c.p,c.b).super}},policy);
  expect(values).toEqual({length:59,self:1,other:.5,super:true});
 });
+
+ test('normal attacks chain at animation end while dodge keeps its recovery',async({page})=>{
+ await page.goto('http://localhost:5173');
+ const result=await page.evaluate(async()=>{
+  const {Combat}=await import('/src/combat.ts');
+  return ['punch','kick','dodge'].map(action=>{
+   const c=new Combat();c.attack(c.p,action);const duration=c.p.duration,initial=c.p.cooldown;
+   c.update(c.p,c.b,{},duration-.001);
+   c.attack(c.p,'punch');const early=c.p.action===action&&c.p.timer<.002;
+   c.update(c.p,c.b,{punch:true},.0011);
+   return {action,duration,initial,early,next:c.p.action,energy:c.p.energy};
+  });
+ });
+ for(const r of result){expect(r.early).toBe(true);expect(r.initial).toBeCloseTo(r.duration+(r.action==='dodge'?.12:0));}
+ expect(result[0].next).toBe('punch');expect(result[0].energy).toBeCloseTo(100-24+19*.3401);
+ expect(result[1].next).toBe('punch');expect(result[2].next).toBe('idle');
+ });

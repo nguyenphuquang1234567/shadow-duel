@@ -46,7 +46,7 @@ function sample(choices:Choice[],random:()=>number):Input{
 export function chooseBotAction(bot:Fighter,opponent:Fighter,level:number,random=Math.random,memory?:BotMemory):Input{
  const superDistance=Math.abs(bot.x-opponent.x),superHeight=Math.abs(bot.y-opponent.y);
  if(bot.hp>0&&bot.superMeter>=100&&superHeight<60){
-  const opening=opponent.action==='hurt'||(opponent.cooldown>.22&&!['punch','kick'].includes(opponent.action));
+  const opening=opponent.action==='hurt'||(['punch','kick'].includes(opponent.action)&&(opponent.hit||opponent.timer/opponent.duration<ACTIVE_END));
   if(superDistance<[145,170,185][level]&&random()<(opening?[.55,.85,.98][level]:[.12,.25,.4][level]))return{super:true};
  }
  if(bot.superStage)return{};
