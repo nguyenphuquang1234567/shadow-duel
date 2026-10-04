@@ -39,7 +39,7 @@ caffeinate -i .venv-rl/bin/python rl/train.py --steps 2000000 --run rl/runs/over
 
 Run `npm run dev`, then open `http://localhost:5173/`. The menu has a separate **Thử thách AI → Bot AI đã luyện** section below Dễ/Vừa/Khó. Select it, wait for Sẵn sàng, and start the match. Selecting a regular difficulty restores the scripted bot. `?rl=1` preselects the trained bot.
 
-The bundled `public/models/ppo-best.json` is the best checkpoint from the 1,000,448-transition run (selected at 920,000 transitions). Its held-out evaluation won 30/30 games per scripted difficulty. This is not a human-player benchmark. The adjacent metadata file records checkpoint selection, results and the policy SHA-256. Only the exported actor and metadata are committed, not Python training checkpoints.
+The bundled `public/models/ppo-best.json` is the best checkpoint from the 1,000,448-transition run (selected at 1,000,000 transitions with Super enabled). Its held-out evaluation won 30/30 games per scripted difficulty. This is not a human-player benchmark. The adjacent metadata file records checkpoint selection, results and the policy SHA-256. Only the exported actor and metadata are committed, not Python training checkpoints.
 
 To replace this local artifact after a new run:
 
@@ -82,6 +82,6 @@ node rl/build.mjs
 .venv-rl/bin/python rl/verify.py --model rl/runs/ppo-super-million/best/best_model.zip
 ```
 
-The best Super actor is exported separately as `public/models/ppo-super-best.json`; it does not replace the current default actor until selected for integration. Evaluation reports Super activations and episodes using Super in addition to wins.
+The best Super actor is exported separately as `public/models/ppo-super-best.json`; it is also installed as the default `ppo-best.json` actor. Evaluation reports Super activations and episodes using Super in addition to wins.
 
-Completed Super run: 1,000,448 transitions, seed 42, four environments, 129.74 seconds. The best actor won all 90 held-out matches (30 per difficulty, deterministic actions, seeds 300000–300029), using Super once per match. This single training seed and scripted-opponent benchmark do not establish strength against people or different opponents. Export parity matched 73 Python/JavaScript decisions. Training checkpoints remain local in `rl/runs/ppo-super-million`; the separate actor and metadata are committed for review. The bundled default `ppo-best.json` is still the previous model. The Scientific Agent Skills reference above documents the skill used for this run.
+Completed Super run: 1,000,448 transitions, seed 42, four environments, 129.74 seconds. The best actor won all 90 held-out matches (30 per difficulty, deterministic actions, seeds 300000–300029), using Super once per match. This single training seed and scripted-opponent benchmark do not establish strength against people or different opponents. Export parity matched 73 Python/JavaScript decisions. Training checkpoints remain local in `rl/runs/ppo-super-million`; the separate actor and metadata are committed for review. The bundled default `ppo-best.json` now uses this Super model. The Scientific Agent Skills reference above documents the skill used for this run.

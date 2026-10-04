@@ -24,7 +24,7 @@ async function selectRL(){
   sim.superEnabled=policy.version>=2;
   sim.botController=(self,other,combat)=>actionInput(policyAction(policy,policyObservation(policy,self,other,combat)),self,other);
   sim.think=0;sim.bot={};document.title='Shadow Duel — Đấu với bóng tối · PPO bot';
-  $('rl-status').textContent='Sẵn sàng · Model tốt nhất sau 1 triệu bước luyện tập.';
+  $('rl-status').textContent=policy.version>=2?'Sẵn sàng · Bot AI đã học Super.':'Sẵn sàng · Model tốt nhất sau 1 triệu bước luyện tập.';
   ($('start') as HTMLButtonElement).disabled=false;
  }catch(error){policyPromise=undefined;if(ticket!==selection)return;
   $('rl-status').textContent='Tải bot AI thất bại. Bấm lại để thử hoặc chọn bot thường.';console.error(error);

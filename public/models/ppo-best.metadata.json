@@ -1,14 +1,46 @@
 {
   "algorithm": "PPO",
+  "schema": 2,
+  "observation_size": 59,
+  "action_count": 13,
   "training_run_steps": 1000448,
-  "selected_checkpoint_steps": 920000,
-  "selection": "highest mean reward in five hard-bot evaluation episodes",
-  "heldout_games_per_level": 30,
-  "heldout_wins_per_level": [
-    30,
-    30,
-    30
-  ],
+  "selected_checkpoint_steps": 1000000,
   "seed": 42,
-  "sha256": "ea4f628fbe3dcd068ea51082a02a8c5cc7853345be1f934d3339cf352e185cae"
+  "seconds": 129.7443224999588,
+  "evaluation_seed": 300000,
+  "evaluation_deterministic": true,
+  "selection": "highest mean reward from five hard-bot evaluation episodes",
+  "heldout": [
+    {
+      "level": 0,
+      "win": 30,
+      "loss": 0,
+      "draw": 0,
+      "win_rate": 1.0,
+      "mean_reward": 2.9519,
+      "super_uses": 30,
+      "episodes_using_super": 30
+    },
+    {
+      "level": 1,
+      "win": 30,
+      "loss": 0,
+      "draw": 0,
+      "win_rate": 1.0,
+      "mean_reward": 2.83885,
+      "super_uses": 30,
+      "episodes_using_super": 30
+    },
+    {
+      "level": 2,
+      "win": 30,
+      "loss": 0,
+      "draw": 0,
+      "win_rate": 1.0,
+      "mean_reward": 2.7373,
+      "super_uses": 30,
+      "episodes_using_super": 30
+    }
+  ],
+  "sha256": "24b0a7dcdb05f6d61edbfbea1c8e731a21b3a22def984717539f50b2981e8440"
 }

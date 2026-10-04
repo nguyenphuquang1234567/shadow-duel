@@ -39,4 +39,4 @@ In Dễ/Vừa/Khó, both fighters have a Super meter. Real damage dealt charges 
 
 The move spends the full meter, immediately rushes forward with a 10-damage punch, then delivers a 15-damage kick. There is no separate windup or recovery lock; control returns as soon as the kick finishes. Both strikes use the existing swept limb hitboxes and can miss or be blocked; getting hit interrupts the move. It grants no invulnerability. Super damage does not recharge the attacker's meter. Normal bot difficulties use it with different probabilities, favouring recovery openings at higher levels.
 
-The existing PPO mode keeps Super disabled for both sides because its exported policy was trained before this mechanic existed. Retraining is needed before adding Super to that mode.
+The PPO mode uses the newly trained schema-2 best actor, so both player and PPO opponent can use Super.

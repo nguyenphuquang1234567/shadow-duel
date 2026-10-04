@@ -110,7 +110,8 @@ test('trained AI has its own section, loads the bundled best model and switches 
  await expect(page.locator('[data-level].active')).toHaveText('Vừa');
  await expect(page.locator('#rl-mode')).toHaveAttribute('aria-pressed','false');
  await page.locator('#rl-mode').click();
- await expect(page.locator('#rl-status')).toContainText('Sẵn sàng');
+ await expect(page.locator('#rl-status')).toContainText('đã học Super');
+ await expect(page.locator('#p-super').locator('..')).toBeVisible();
  await expect(page.locator('[data-level].active')).toHaveCount(0);
  await expect(page.locator('#start')).toBeEnabled();
  await page.screenshot({path:'preview-rl-mode.png'});
