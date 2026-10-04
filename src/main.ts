@@ -56,7 +56,19 @@ class Arena extends Phaser.Scene{g!:Phaser.GameObjects.Graphics;fx:{x:number;y:n
  for(const x of [70,1120]){g.fillStyle(0x182d26);g.fillRect(x,215,30,235);g.fillRect(x-13,210,56,17);g.fillTriangle(x-45,211,x+73,211,x+14,180);g.lineStyle(2,0x152b24);g.lineBetween(x+14,225,x+14,282);g.fillStyle(0xdbb270,.8);g.fillRoundedRect(x+2,278,24,34,5)}
  g.fillStyle(0x182a23);g.fillRect(0,445,1200,155);g.fillStyle(0x6e7760);g.fillRect(0,441,1200,5);g.lineStyle(1,0x85917b,.13);for(let y=460;y<600;y+=31){g.lineBetween(0,y,1200,y);for(let x=(y%2)*55;x<1200;x+=125)g.lineBetween(x,y,x-20,y+31)}g.fillStyle(0x11251e);for(let x=0;x<1200;x+=37){g.fillTriangle(x,445,x+6,415+Math.sin(x)*15,x+11,445)} }
  drawFighter(f:Fighter,color:number,t:number,alpha=1){const g=this.g;const {x,y,hip,neck,head,backKnee,backFoot,backToe,knee,foot,toe,shoulder,elbow,fist,e2,h2,block}=pose(f,t);
- const line=(a:{x:number;y:number},b:{x:number;y:number},w:number)=>{g.lineStyle(w,0x090e0d,alpha);g.lineBetween(a.x,a.y,b.x,b.y);g.fillStyle(0x090e0d,alpha);g.fillCircle(b.x,b.y,w/2)};g.fillStyle(0x000000,.25*alpha);g.fillEllipse(x,447,91-f.y*.08,12);line(hip,neck,24);g.fillStyle(0x090e0d,alpha);g.fillCircle(head.x,head.y,15);line(neck,{x:(neck.x+head.x)/2,y:(neck.y+head.y)/2},13);
+ const line=(a:{x:number;y:number},b:{x:number;y:number},w:number)=>{g.lineStyle(w,0x090e0d,alpha);g.lineBetween(a.x,a.y,b.x,b.y);g.fillStyle(0x090e0d,alpha);g.fillCircle(b.x,b.y,w/2)};g.fillStyle(0x000000,.25*alpha);g.fillEllipse(x,447,91-f.y*.08,12);if(alpha===1&&sim.superEnabled&&f.superMeter>=100&&f.hp>0){
+ // Draw a 1.5px rim behind the existing silhouette; physics remains in geometry.ts.
+ const rim=0xffedaa;g.fillStyle(rim);
+ const segments:[{x:number;y:number},{x:number;y:number},number][]=[
+  [hip,neck,24],[neck,{x:(neck.x+head.x)/2,y:(neck.y+head.y)/2},13],
+  [hip,backKnee,15],[backKnee,backFoot,12],[backFoot,backToe,10],
+  [hip,knee,16],[knee,foot,12],[foot,toe,10],
+  [shoulder,elbow,13],[elbow,fist,11],[shoulder,e2,14],[e2,h2,11],
+ ];
+ for(const [a,b,w] of segments){g.lineStyle(w+3,rim);g.lineBetween(a.x,a.y,b.x,b.y);g.fillCircle(b.x,b.y,w/2+1.5)}
+ g.fillCircle(head.x,head.y,16.5);g.fillCircle(h2.x,h2.y,9.5);
+ }
+ line(hip,neck,24);g.fillStyle(0x090e0d,alpha);g.fillCircle(head.x,head.y,15);line(neck,{x:(neck.x+head.x)/2,y:(neck.y+head.y)/2},13);
 line(hip,backKnee,15);line(backKnee,backFoot,12);line(backFoot,backToe,10);
 line(hip,knee,16);line(knee,foot,12);line(foot,toe,10);
 line(shoulder,elbow,13);line(elbow,fist,11);line(shoulder,e2,14);line(e2,h2,11);g.fillCircle(h2.x,h2.y,8);
